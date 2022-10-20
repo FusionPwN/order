@@ -112,6 +112,11 @@ class OrderFactory implements OrderFactoryContract
 						$item['store_discount'] = $store_discount_adjustment->getAmount();
 					}
 
+					$direct_discount_adjustment = $adjustments->byType(AdjustmentTypeProxy::DIRECT_DISCOUNT())->first();
+					if (isset($direct_discount_adjustment)) {
+						$item['direct_discount'] = $direct_discount_adjustment->getAmount();
+					}
+
 					foreach ($adjustments->getIterator() as $adjustment) {
 						if (AdjustmentTypeProxy::IsCampaignDiscount($adjustment->type)) {
 							$item['discount_id'] = $adjustment->getOrigin();

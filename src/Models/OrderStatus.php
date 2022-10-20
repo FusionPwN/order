@@ -18,44 +18,85 @@ use Vanilo\Order\Contracts\OrderStatus as OrderStatusContract;
 
 class OrderStatus extends Enum implements OrderStatusContract
 {
-    public const __DEFAULT = self::PENDING;
+	const __DEFAULT = self::PENDING;
 
-    /**
-     * Pending orders are brand new orders that have not been processed yet.
-     */
-    public const PENDING = 'pending';
+	/**
+	 * Pending orders are brand new orders that have not been processed yet.
+	 */
+	const PENDING = 'pendente';
 
-    /**
-     * Orders fulfilled completely.
-     */
-    public const COMPLETED = 'completed';
+	/**
+	 * Payed orders are brand new orders that have not been processed yet.
+	 */
+	const PAID = 'paga';
 
-    /**
-     * Order that has been cancelled.
-     */
-    public const CANCELLED = 'cancelled';
+	/**
+	 * Delivered orders are brand new orders that have not been processed yet.
+	 */
+	const DISPATCHED = 'expedida';
 
-    // $labels static property needs to be defined
-    public static $labels = [];
+	/**
+	 * Delivered orders are brand new orders that have not been processed yet.
+	 */
+	const ON_BILLING = 'em_faturacao';
 
-    protected static $openStatuses = [self::PENDING];
+	/**
+	 * Delivered orders are brand new orders that have not been processed yet.
+	 */
+	const BILLED = 'faturada';
 
-    public function isOpen(): bool
-    {
-        return in_array($this->value, static::$openStatuses);
-    }
+	/**
+	 * Orders fulfilled completely.
+	 */
+	const COMPLETED = 'concluida';
 
-    public static function getOpenStatuses(): array
-    {
-        return static::$openStatuses;
-    }
+	/**
+	 * Order that has been cancelled.
+	 */
+	const CANCELLED = 'cancelada';
 
-    protected static function boot()
-    {
-        static::$labels = [
-            self::PENDING => __('Pending'),
-            self::COMPLETED => __('Completed'),
-            self::CANCELLED => __('Cancelled')
-        ];
-    }
+	// $labels static property needs to be defined
+	public static $labels = [];
+
+	protected static $openStatuses = [self::PENDING, self::PAID, self::DISPATCHED, self::ON_BILLING];
+
+	protected static $closedStatuses = [self::CANCELLED, self::COMPLETED];
+
+	public function isOpen(): bool
+	{
+		return in_array($this->value, static::$openStatuses);
+	}
+
+	public function isClosed(): bool
+	{
+		return in_array($this->value, static::$closedStatuses);
+	}
+
+	public static function getOpenStatuses(): array
+	{
+		return static::$openStatuses;
+	}
+
+	public static function getClosedStatuses(): array
+	{
+		return static::$closedStatuses;
+	}
+
+	public static function getStatusLabel(string $status): string
+	{
+		return self::$labels[$status];
+	}
+
+	protected static function boot()
+	{
+		static::$labels = [
+			self::PENDING     => __('backoffice.order.pending'),
+			self::COMPLETED   => __('backoffice.order.completed'),
+			self::CANCELLED   => __('backoffice.order.cancelled'),
+			self::PAID        => __('backoffice.order.paid'),
+			self::DISPATCHED  => __('backoffice.order.dispatched'),
+			self::ON_BILLING  => __('backoffice.order.on_billing'),
+			self::BILLED      => __('backoffice.order.billed'),
+		];
+	}
 }
