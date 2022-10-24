@@ -38,10 +38,5 @@
         "psr-4": {
             "Vanilo\\Order\\Tests\\": "tests/"
         }
-    },
-    "extra": {
-        "branch-alias": {
-            "dev-master": "2.2.5-dev"
-        }
     }
 }
