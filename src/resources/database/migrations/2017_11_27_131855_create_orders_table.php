@@ -23,6 +23,14 @@ class CreateOrdersTable extends Migration
             $table->foreign('user_id')
                 ->references('id')
                 ->on('users');
+
+            $table->foreign('billpayer_id')
+                  ->references('id')
+                  ->on('billpayers');
+
+            $table->foreign('shipping_address_id')
+                  ->references('id')
+                  ->on('addresses');
         });
     }
 
