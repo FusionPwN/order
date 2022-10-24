@@ -85,12 +85,12 @@ class Order extends Model implements OrderContract
         return $this->belongsTo(UserProxy::modelClass());
     }
 
-    public function getBillpayer(): ?BillPayer
+    public function getBillpayer(): ?Collection
     {
         return $this->billpayer;
     }
 
-    public function getShippingAddress(): ?Address
+    public function getShippingAddress(): ?Collection
     {
         return $this->shippingAddress;
     }
@@ -98,11 +98,6 @@ class Order extends Model implements OrderContract
     public function getItems(): Traversable
     {
         return $this->items;
-    }
-
-    public function billpayer()
-    {
-        return $this->belongsTo(BillpayerProxy::modelClass());
     }
 
     public function shippingAddress()
