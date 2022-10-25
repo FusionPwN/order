@@ -41,7 +41,7 @@ class OrderFactory implements OrderFactoryContract
 	protected $orderNumberGenerator;
 
 	/* Variavel que incrementa sempre que se insere um registo na tabela order_discounts para depois associar os numeros aodesconto */
-	private $countDiscount = 1; 
+	private $countDiscount = 1;
 
 	public function __construct(OrderNumberGenerator $generator)
 	{
@@ -53,7 +53,6 @@ class OrderFactory implements OrderFactoryContract
 	 */
 	public function createFromDataArray(array $data, array $items): Order
 	{
-		dd('order');
 		if (empty($items)) {
 			throw new CreateOrderException(__('Can not create an order without items'));
 		}
@@ -64,9 +63,32 @@ class OrderFactory implements OrderFactoryContract
 			$order = app(Order::class);
 
 			$order->fill(Arr::except($data, ['billpayer', 'shippingAddress', 'shipping', 'payment']));
-			$order->number = $data['number'] ?? $this->orderNumberGenerator->generateNumber($order);
-			$order->user_id = $data['user_id'] ?? Auth::guard('web')->id();
-			$order->token = (string) Str::uuid();
+
+			$order->number 				= $data['number'] ?? $this->orderNumberGenerator->generateNumber($order);
+			$order->user_id 			= $data['user_id'] ?? Auth::guard('web')->id();
+			$order->token 				= (string) Str::uuid();
+			$order->email 				= $data['shippingAddress']->email;
+			$order->phone 				= $data['shippingAddress']->phone;
+
+			$order->shipping_firstname 	= $data['shippingAddress']->firstname;
+			$order->shipping_lastname 	= $data['shippingAddress']->lastname;
+			$order->shipping_country_id = $data['shippingAddress']->country_id;
+			$order->shipping_postalcode = $data['shippingAddress']->postalcode;
+			$order->shipping_city 		= $data['shippingAddress']->city;
+			$order->shipping_address 	= $data['shippingAddress']->address;
+
+			if ($data['billpayer']->id)
+				$order->billing_firstname 	= $data['billpayer']->firstname;
+			$order->billing_lastname 	= $data['billpayer']->lastname;
+			$order->billing_country_id 	= $data['billpayer']->country_id;
+			$order->billing_postalcode 	= $data['billpayer']->postalcode;
+			$order->billing_city 		= $data['billpayer']->city;
+			$order->billing_address 	= $data['billpayer']->address;
+
+			$order->nif 				= $data['billpayer']->nif ?? $data['shippingAddress']->nif ?? null;
+
+			dd($order);
+
 			$order->save();
 
 			$freeShippingAdjustmentCoupon = null;
@@ -91,8 +113,8 @@ class OrderFactory implements OrderFactoryContract
 				}
 			}
 
-			$this->createBillpayer($order, $data);
-			$this->createShippingAddress($order, $data);
+			#$this->createBillpayer($order, $data);
+			#$this->createShippingAddress($order, $data);
 
 			$this->createItems(
 				$order,
@@ -152,6 +174,13 @@ class OrderFactory implements OrderFactoryContract
 		DB::commit();
 
 		event(new OrderWasCreated($order));
+
+		return $order;
+	}
+
+	protected function fillOrderAdresses(Order $order): ?Order
+	{
+
 
 		return $order;
 	}
