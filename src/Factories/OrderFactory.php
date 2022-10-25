@@ -53,6 +53,7 @@ class OrderFactory implements OrderFactoryContract
 	 */
 	public function createFromDataArray(array $data, array $items): Order
 	{
+		dd('order');
 		if (empty($items)) {
 			throw new CreateOrderException(__('Can not create an order without items'));
 		}
