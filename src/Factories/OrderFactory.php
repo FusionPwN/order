@@ -86,8 +86,7 @@ class OrderFactory implements OrderFactoryContract
 				$order->billing_postalcode 	= $data['billpayer']->postalcode;
 				$order->billing_city 		= $data['billpayer']->city;
 				$order->billing_address 	= $data['billpayer']->address;
-
-				$order->nif 				= $data['billpayer']->nif ?? $data['shippingAddress']->nif;
+				$order->nif 				= $data['billpayer']->nif;
 			} else {
 				$order->billing_simple = 1;
 			}
