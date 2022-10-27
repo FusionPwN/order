@@ -334,24 +334,25 @@ class OrderFactory implements OrderFactoryContract
 		return isset($item['product']) && $item['product'] instanceof Buyable;
 	}
 
-	private function createAddress($address, AddressType $type = null)
+	private function createAddress($data, AddressType $type = null)
 	{
+		$address = [];
 		$type = is_null($type) ? AddressTypeProxy::defaultValue() : $type;
 		$address['type'] = $type;
-		$address['firstname'] = $address->firstname;
-		$address['lastname'] = $address->lastname;
-		$address['country_id'] = $address->country_id;
-		$address['postalcode'] = $address->postalcode;
-		$address['city'] = $address->city;
-		$address['address'] = $address->address;
-		$address['email'] = $address->email;
-		$address['phone'] = $address->phone;
-		$address['nif'] = $address->nif ?? null;
+		$address['firstname'] = $data->firstname;
+		$address['lastname'] = $data->lastname;
+		$address['country_id'] = $data->country_id;
+		$address['postalcode'] = $data->postalcode;
+		$address['city'] = $data->city;
+		$address['address'] = $data->address;
+		$address['email'] = $data->email;
+		$address['phone'] = $data->phone;
+		$address['nif'] = $data->nif ?? null;
 
 		$address = AddressProxy::create($address);
 
 		Auth::guard('web')->user()->addresses()->associate($address);
 
-		return AddressProxy::create($address);
+		return $address;
 	}
 }
