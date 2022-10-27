@@ -32,6 +32,7 @@ use Vanilo\Order\Contracts\OrderNumberGenerator;
 use Vanilo\Order\Events\OrderWasCreated;
 use Vanilo\Order\Exceptions\CreateOrderException;
 use Auth;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Vanilo\Adjustments\Models\AdjustmentTypeProxy;
 
@@ -77,19 +78,29 @@ class OrderFactory implements OrderFactoryContract
 			$order->shipping_city 		= $data['shippingAddress']->city;
 			$order->shipping_address 	= $data['shippingAddress']->address;
 
-			if ($data['billpayer']->id)
+			if ($data['billpayer']->id != 'fatura-simplificada') {
 				$order->billing_firstname 	= $data['billpayer']->firstname;
-			$order->billing_lastname 	= $data['billpayer']->lastname;
-			$order->billing_country_id 	= $data['billpayer']->country_id;
-			$order->billing_postalcode 	= $data['billpayer']->postalcode;
-			$order->billing_city 		= $data['billpayer']->city;
-			$order->billing_address 	= $data['billpayer']->address;
+				$order->billing_lastname 	= $data['billpayer']->lastname;
+				$order->billing_country_id 	= $data['billpayer']->country_id;
+				$order->billing_postalcode 	= $data['billpayer']->postalcode;
+				$order->billing_city 		= $data['billpayer']->city;
+				$order->billing_address 	= $data['billpayer']->address;
 
-			$order->nif 				= $data['billpayer']->nif ?? $data['shippingAddress']->nif ?? null;
-
-			dd($order);
+				$order->nif 				= $data['billpayer']->nif ?? $data['shippingAddress']->nif;
+			} else {
+				$order->billing_simple = 1;
+			}
 
 			$order->save();
+
+			if (Auth::guard('web')->check()) {
+				if ($data['shippingAddress']->id == 'new-address') {
+					$this->createAddress($data['shippingAddress'], AddressTypeProxy::SHIPPING());
+				}
+				if ($data['billpayer']->id == 'new-address') {
+					$this->createAddress($data['billpayer'], AddressTypeProxy::BILLING());
+				}
+			}
 
 			$freeShippingAdjustmentCoupon = null;
 
@@ -112,9 +123,6 @@ class OrderFactory implements OrderFactoryContract
 					}
 				}
 			}
-
-			#$this->createBillpayer($order, $data);
-			#$this->createShippingAddress($order, $data);
 
 			$this->createItems(
 				$order,
@@ -176,36 +184,6 @@ class OrderFactory implements OrderFactoryContract
 		event(new OrderWasCreated($order));
 
 		return $order;
-	}
-
-	protected function fillOrderAdresses(Order $order): ?Order
-	{
-
-
-		return $order;
-	}
-
-	protected function createShippingAddress(Order $order, array $data)
-	{
-		if ($address = isset($data['shippingAddress'])) {
-			$order->shippingAddress()->associate(
-				$this->createOrCloneAddress($data['shippingAddress'], AddressTypeProxy::SHIPPING())
-			);
-		}
-	}
-
-	protected function createBillpayer(Order $order, array $data)
-	{
-		if (isset($data['billpayer'])) {
-			$address = $this->createOrCloneAddress($data['billpayer']['address'], AddressTypeProxy::BILLING());
-
-			$billpayer = app(Billpayer::class);
-			$billpayer->fill(Arr::except($data['billpayer'], 'address'));
-			$billpayer->address()->associate($address);
-			$billpayer->save();
-
-			$order->billpayer()->associate($billpayer);
-		}
 	}
 
 	protected function createItems(Order $order, array $items)
@@ -356,34 +334,19 @@ class OrderFactory implements OrderFactoryContract
 		return isset($item['product']) && $item['product'] instanceof Buyable;
 	}
 
-	private function addressToAttributes(Address $address)
+	private function createAddress($address, AddressType $type = null)
 	{
-		return [
-			'name' => $address->getName(),
-			'postalcode' => $address->getPostalCode(),
-			'country_id' => $address->getCountryCode(),
-			/** @todo Convert Province code to province_id */
-			'city' => $address->getCity(),
-			'address' => $address->getAddress(),
-		];
-	}
-
-	private function createOrCloneAddress($address, AddressType $type = null)
-	{
-		if ($address instanceof Address) {
-			$address = $this->addressToAttributes($address);
-		} elseif (!is_array($address)) {
-			throw new CreateOrderException(
-				sprintf(
-					'Address data is %s but it should be either an Address or an array',
-					gettype($address)
-				)
-			);
-		}
-
 		$type = is_null($type) ? AddressTypeProxy::defaultValue() : $type;
 		$address['type'] = $type;
-		$address['name'] = empty(Arr::get($address, 'name')) ? '-' : $address['name'];
+		$address['firstname'] = $address->firstname;
+		$address['lastname'] = $address->lastname;
+		$address['country_id'] = $address->country_id;
+		$address['postalcode'] = $address->postalcode;
+		$address['city'] = $address->city;
+		$address['address'] = $address->address;
+		$address['email'] = $address->email;
+		$address['phone'] = $address->phone;
+		$address['nif'] = $address->nif ?? null;
 
 		return AddressProxy::create($address);
 	}
