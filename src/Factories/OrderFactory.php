@@ -348,6 +348,10 @@ class OrderFactory implements OrderFactoryContract
 		$address['phone'] = $address->phone;
 		$address['nif'] = $address->nif ?? null;
 
+		$address = AddressProxy::create($address);
+
+		Auth::guard('web')->user()->addresses()->associate($address);
+
 		return AddressProxy::create($address);
 	}
 }
