@@ -13,9 +13,8 @@ declare(strict_types=1);
 
 namespace Vanilo\Order\Contracts;
 
+use Illuminate\Support\Collection;
 use Traversable;
-use Vanilo\Contracts\Address;
-use Vanilo\Contracts\BillPayer;
 
 interface Order
 {
@@ -23,9 +22,9 @@ interface Order
 
     public function getStatus(): OrderStatus;
 
-    public function getBillpayer(): ?BillPayer;
+    public function getBillpayer(): ?Collection;
 
-    public function getShippingAddress(): ?Address;
+    public function getShippingAddress(): ?Collection;
 
     public function getItems(): Traversable;
 
