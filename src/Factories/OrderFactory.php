@@ -18,6 +18,7 @@ use App\Models\Admin\Discount;
 use App\Models\Admin\OrderCoupon;
 use App\Models\Admin\OrderDiscount;
 use App\Models\Admin\Product;
+use App\Models\UserAddresses;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Konekt\Address\Contracts\AddressType;
@@ -350,8 +351,10 @@ class OrderFactory implements OrderFactoryContract
 		$address['nif'] = $data->nif ?? null;
 
 		$address = AddressProxy::create($address);
-
-		Auth::guard('web')->user()->addresses()->associate($address);
+		UserAddresses::create([
+			'user_id' 		=> Auth::guard('web')->user()->id,
+			'address_id' 	=> $address->id
+		]);
 
 		return $address;
 	}
