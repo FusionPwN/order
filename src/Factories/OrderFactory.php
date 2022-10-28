@@ -24,16 +24,13 @@ use Illuminate\Support\Facades\DB;
 use Konekt\Address\Contracts\AddressType;
 use Konekt\Address\Models\AddressProxy;
 use Konekt\Address\Models\AddressTypeProxy;
-use Vanilo\Contracts\Address;
 use Vanilo\Contracts\Buyable;
-use Vanilo\Order\Contracts\Billpayer;
 use Vanilo\Order\Contracts\Order;
 use Vanilo\Order\Contracts\OrderFactory as OrderFactoryContract;
 use Vanilo\Order\Contracts\OrderNumberGenerator;
 use Vanilo\Order\Events\OrderWasCreated;
 use Vanilo\Order\Exceptions\CreateOrderException;
 use Auth;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Vanilo\Adjustments\Models\AdjustmentTypeProxy;
 
