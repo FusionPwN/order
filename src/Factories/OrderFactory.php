@@ -77,6 +77,12 @@ class OrderFactory implements OrderFactoryContract
 			$order->shipping_address 	= $data['shippingAddress']->address;
 
 			if ($data['billpayer']->id != 'fatura-simplificada') {
+				if (!property_exists($data['billpayer'], 'nif')) {
+					\Log::debug('ORDER ERROR DEBUG shippingAddress: ');
+					\Log::debug(print_r($data['shippingAddress'], true));
+					\Log::debug('ORDER ERROR DEBUG billpayer: ');
+					\Log::debug(print_r($data['billpayer'], true));
+				}
 				$order->billing_firstname 	= $data['billpayer']->firstname;
 				$order->billing_lastname 	= $data['billpayer']->lastname;
 				$order->billing_country_id 	= $data['billpayer']->country_id;
