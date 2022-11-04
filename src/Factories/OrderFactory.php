@@ -63,6 +63,13 @@ class OrderFactory implements OrderFactoryContract
 
 			$order->fill(Arr::except($data, ['billpayer', 'shippingAddress', 'shipping', 'payment']));
 
+			if ($data['billpayer']->id != 'fatura-simplificada' && !property_exists($data['billpayer'], 'nif')) {
+				\Log::debug('ORDER ERROR DEBUG shippingAddress: ');
+				\Log::debug(print_r($data['shippingAddress'], true));
+				\Log::debug('ORDER ERROR DEBUG billpayer: ');
+				\Log::debug(print_r($data['billpayer'], true));
+			}
+
 			$order->number 				= $data['number'] ?? $this->orderNumberGenerator->generateNumber($order);
 			$order->user_id 			= $data['user_id'] ?? Auth::guard('web')->id();
 			$order->token 				= (string) Str::uuid();
