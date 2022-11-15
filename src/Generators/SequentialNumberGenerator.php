@@ -44,7 +44,7 @@ class SequentialNumberGenerator implements OrderNumberGenerator
      */
     public function generateNumber(Order $order = null): string
     {
-        $lastOrder = OrderProxy::orderBy('id', 'desc')->limit(1)->first();
+        $lastOrder = OrderProxy::orderBy('id', 'desc')->withTrashed()->limit(1)->first();
 
         $last = $lastOrder ? $lastOrder->id : 0;
         $next = $this->startSequenceFrom + $last;
