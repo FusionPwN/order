@@ -62,6 +62,8 @@ class OrderStatus extends Enum implements OrderStatusContract
 
 	protected static $closedStatuses = [self::CANCELLED, self::COMPLETED];
 
+	protected static $paidStatuses = [self::PAID, self::DISPATCHED, self::ON_BILLING, self::COMPLETED];
+
 	public function isOpen(): bool
 	{
 		return in_array($this->value, static::$openStatuses);
@@ -80,6 +82,11 @@ class OrderStatus extends Enum implements OrderStatusContract
 	public static function getClosedStatuses(): array
 	{
 		return static::$closedStatuses;
+	}
+
+	public static function getPaidStatuses(): array
+	{
+		return static::$paidStatuses;
 	}
 
 	public static function getStatusLabel(string $status): string
