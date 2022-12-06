@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace Vanilo\Order\Factories;
 
+use App\Models\Admin\Card;
 use App\Models\Admin\Coupon;
 use App\Models\Admin\Discount;
 use App\Models\Admin\OrderCoupon;
@@ -33,6 +34,7 @@ use Vanilo\Order\Exceptions\CreateOrderException;
 use Auth;
 use Illuminate\Support\Str;
 use Vanilo\Adjustments\Models\AdjustmentTypeProxy;
+use Vanilo\Order\Models\OrderStatusProxy;
 
 class OrderFactory implements OrderFactoryContract
 {
@@ -60,6 +62,9 @@ class OrderFactory implements OrderFactoryContract
 
 		try {
 			$order = app(Order::class);
+			if($data['totalWithCard'] == 0){
+				$data['status'] = OrderStatusProxy::PAID()->value();
+			}
 
 			$order->fill(Arr::except($data, ['billpayer', 'shippingAddress', 'shipping', 'payment']));
 
@@ -162,11 +167,22 @@ class OrderFactory implements OrderFactoryContract
 			);
 
 			$shippingAdjustment = $data['adjustments']->byType(AdjustmentTypeProxy::SHIPPING())->first();
+			$clientCardAdjustment = $data['adjustments']->byType(AdjustmentTypeProxy::CLIENT_CARD())->first();
 
 			if (isset($freeShippingAdjustmentCoupon)) {
 				$order->shipping_price = $shippingAdjustment->getAmount() + $freeShippingAdjustmentCoupon->getAmount();
 			} else {
 				$order->shipping_price = $shippingAdjustment->getAmount();
+			}
+
+			if(isset($clientCardAdjustment)){
+				$order->card_used_balance = abs($clientCardAdjustment->getAmount());
+
+				$card = Card::find($clientCardAdjustment->getData()['card']['id']);
+
+				$card->temp_balance_points = $card->temp_balance_points - abs($clientCardAdjustment->getAmount());
+
+				$card->save();
 			}
 
 			$order->save();
