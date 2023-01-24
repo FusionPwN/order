@@ -349,6 +349,8 @@ class OrderFactory implements OrderFactoryContract
 
 	private function createAddress($data, AddressType $type = null)
 	{
+		$user = Auth::guard('web')->user();
+
 		$address = [];
 		$type = is_null($type) ? AddressTypeProxy::defaultValue() : $type;
 		$address['type'] = $type;
@@ -365,11 +367,7 @@ class OrderFactory implements OrderFactoryContract
 			$address['nif'] = $data->nif;
 		}
 
-		$address = AddressProxy::create($address);
-		UserAddresses::create([
-			'user_id' 		=> Auth::guard('web')->user()->id,
-			'address_id' 	=> $address->id
-		]);
+		$address = $user->addresses()->create($address);
 
 		return $address;
 	}
