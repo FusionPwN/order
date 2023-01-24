@@ -18,6 +18,7 @@ use App\Models\Admin\Coupon;
 use App\Models\Admin\Discount;
 use App\Models\Admin\OrderCoupon;
 use App\Models\Admin\OrderDiscount;
+use App\Models\Admin\Prescription;
 use App\Models\Admin\Product;
 use App\Models\UserAddresses;
 use Illuminate\Support\Arr;
@@ -54,7 +55,7 @@ class OrderFactory implements OrderFactoryContract
 	 */
 	public function createFromDataArray(array $data, array $items): Order
 	{
-		if (empty($items)) {
+		if (empty($items) && Arr::get($data, 'type') == 'checkout') {
 			throw new CreateOrderException(__('Can not create an order without items'));
 		}
 
@@ -62,7 +63,8 @@ class OrderFactory implements OrderFactoryContract
 
 		try {
 			$order = app(Order::class);
-			if($data['totalWithCard'] == 0){
+
+			if (Arr::get($data, 'totalWithCard', '') == 0) {
 				$data['status'] = OrderStatusProxy::PAID()->value();
 			}
 
@@ -106,7 +108,8 @@ class OrderFactory implements OrderFactoryContract
 
 			$freeShippingAdjustmentCoupon = null;
 
-			foreach ($data['adjustments'] as $adjustment) {
+			$adjustments = Arr::get($data, 'adjustments', []);
+			foreach ($adjustments as $adjustment) {
 				if (AdjustmentTypeProxy::IsCoupon($adjustment->type)) {
 					$coupon = Coupon::find($adjustment->getOrigin());
 					OrderCoupon::create([
@@ -126,63 +129,72 @@ class OrderFactory implements OrderFactoryContract
 				}
 			}
 
-			$this->createItems(
-				$order,
-				array_map(function ($item) use ($freeShippingAdjustmentCoupon) {
-					// Default quantity is 1 if unspecified
-					$item['quantity'] = $item['quantity'] ?? 1;
-					$item['discount_id'] = 0;
+			if (Arr::get($data, 'type') == 'checkout') {
+				$this->createItems(
+					$order,
+					array_map(function ($item) use ($freeShippingAdjustmentCoupon) {
+						// Default quantity is 1 if unspecified
+						$item['quantity'] = $item['quantity'] ?? 1;
+						$item['discount_id'] = 0;
 
-					$adjustments = $item['adjustments'];
+						$adjustments = $item['adjustments'];
 
-					$interval_discount_adjustment = $adjustments->byType(AdjustmentTypeProxy::INTERVAL_DISCOUNT())->first();
-					if (isset($interval_discount_adjustment)) {
-						$item['interval_discount'] = $interval_discount_adjustment->getAmount();
-					}
+						$interval_discount_adjustment = $adjustments->byType(AdjustmentTypeProxy::INTERVAL_DISCOUNT())->first();
+						if (isset($interval_discount_adjustment)) {
+							$item['interval_discount'] = $interval_discount_adjustment->getAmount();
+						}
 
-					$store_discount_adjustment = $adjustments->byType(AdjustmentTypeProxy::STORE_DISCOUNT())->first();
-					if (isset($store_discount_adjustment)) {
-						$item['store_discount'] = $store_discount_adjustment->getAmount();
-					}
+						$store_discount_adjustment = $adjustments->byType(AdjustmentTypeProxy::STORE_DISCOUNT())->first();
+						if (isset($store_discount_adjustment)) {
+							$item['store_discount'] = $store_discount_adjustment->getAmount();
+						}
 
-					$direct_discount_adjustment = $adjustments->byType(AdjustmentTypeProxy::DIRECT_DISCOUNT())->first();
-					if (isset($direct_discount_adjustment)) {
-						$item['direct_discount'] = $direct_discount_adjustment->getAmount();
-					}
+						$direct_discount_adjustment = $adjustments->byType(AdjustmentTypeProxy::DIRECT_DISCOUNT())->first();
+						if (isset($direct_discount_adjustment)) {
+							$item['direct_discount'] = $direct_discount_adjustment->getAmount();
+						}
 
-					foreach ($adjustments->getIterator() as $adjustment) {
-						if (AdjustmentTypeProxy::IsCampaignDiscount($adjustment->type)) {
-							$item['discount_id'] = $adjustment->getOrigin();
-						} else if (AdjustmentTypeProxy::IsCoupon($adjustment->type)) {
-							$item['coupon_id'] = $adjustment->getOrigin();
+						foreach ($adjustments->getIterator() as $adjustment) {
+							if (AdjustmentTypeProxy::IsCampaignDiscount($adjustment->type)) {
+								$item['discount_id'] = $adjustment->getOrigin();
+							} else if (AdjustmentTypeProxy::IsCoupon($adjustment->type)) {
+								$item['coupon_id'] = $adjustment->getOrigin();
 
-							if ($adjustment->type->value() === AdjustmentTypeProxy::COUPON_FREE_SHIPPING()->value()) {
-								$freeShippingAdjustmentCoupon = $adjustment;
+								if ($adjustment->type->value() === AdjustmentTypeProxy::COUPON_FREE_SHIPPING()->value()) {
+									$freeShippingAdjustmentCoupon = $adjustment;
+								}
 							}
 						}
-					}
 
-					return $item;
-				}, $items)
-			);
+						return $item;
+					}, $items)
+				);
 
-			$shippingAdjustment = $data['adjustments']->byType(AdjustmentTypeProxy::SHIPPING())->first();
-			$clientCardAdjustment = $data['adjustments']->byType(AdjustmentTypeProxy::CLIENT_CARD())->first();
+				$shippingAdjustment = $adjustments->byType(AdjustmentTypeProxy::SHIPPING())->first();
+				$clientCardAdjustment = $adjustments->byType(AdjustmentTypeProxy::CLIENT_CARD())->first();
 
-			if (isset($freeShippingAdjustmentCoupon)) {
-				$order->shipping_price = $shippingAdjustment->getAmount() + $freeShippingAdjustmentCoupon->getAmount();
-			} else {
-				$order->shipping_price = $shippingAdjustment->getAmount();
-			}
+				if (isset($freeShippingAdjustmentCoupon)) {
+					$order->shipping_price = $shippingAdjustment->getAmount() + $freeShippingAdjustmentCoupon->getAmount();
+				} else {
+					$order->shipping_price = $shippingAdjustment->getAmount();
+				}
 
-			if(isset($clientCardAdjustment)){
-				$order->card_used_balance = abs($clientCardAdjustment->getAmount());
+				if (isset($clientCardAdjustment)) {
+					$order->card_used_balance = abs($clientCardAdjustment->getAmount());
 
-				$card = Card::find($clientCardAdjustment->getData()['card']['id']);
+					$card = Card::find($clientCardAdjustment->getData()['card']['id']);
 
-				$card->temp_balance_points = $card->temp_balance_points - abs($clientCardAdjustment->getAmount());
+					$card->temp_balance_points = $card->temp_balance_points - abs($clientCardAdjustment->getAmount());
 
-				$card->save();
+					$card->save();
+				}
+			} else if (Arr::get($data, 'type') == 'prescription') {
+				$prescription = Prescription::create([
+					'info' => '',
+					'obs' => ''
+				]);
+
+				$order->prescription_id = $prescription->id;
 			}
 
 			$order->save();
@@ -350,7 +362,7 @@ class OrderFactory implements OrderFactoryContract
 	private function createAddress($data, AddressType $type = null)
 	{
 		$user = Auth::guard('web')->user();
-
+		
 		$address = [];
 		$type = is_null($type) ? AddressTypeProxy::defaultValue() : $type;
 		$address['type'] = $type;
