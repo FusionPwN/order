@@ -64,6 +64,21 @@ class OrderStatus extends Enum implements OrderStatusContract
 
 	protected static $paidStatuses = [self::PAID, self::DISPATCHED, self::ON_BILLING, self::COMPLETED];
 
+	# para a app
+	protected static $statusColors = [
+		self::PENDING 	=> '#de972d',
+		self::PAID		=> '#3399d8',
+		self::CANCELLED => '#dd302a',
+		self::COMPLETED => '#349ed2'
+	];
+
+	protected static $statusIcons = [
+		self::PENDING 	=> 'fa.clock',
+		self::PAID		=> 'fa.moneyBillAlt',
+		self::CANCELLED => 'fa.ban',
+		self::COMPLETED => 'fa.calendarCheck'
+	];
+
 	public function isOpen(): bool
 	{
 		return in_array($this->value, static::$openStatuses);
@@ -92,6 +107,16 @@ class OrderStatus extends Enum implements OrderStatusContract
 	public static function getStatusLabel(string $status): string
 	{
 		return self::$labels[$status];
+	}
+
+	public static function getStatusColor(string $status): string
+	{
+		return self::$statusColors[$status];
+	}
+
+	public static function getStatusIcon(string $status): string
+	{
+		return self::$statusIcons[$status];
 	}
 
 	protected static function boot()
