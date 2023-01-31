@@ -66,17 +66,19 @@ class OrderStatus extends Enum implements OrderStatusContract
 
 	# para a app
 	protected static $statusColors = [
-		self::PENDING 	=> '#de972d',
-		self::PAID		=> '#3399d8',
-		self::CANCELLED => '#dd302a',
-		self::COMPLETED => '#349ed2'
+		self::PENDING 		=> '#de972d',
+		self::PAID			=> '#3399d8',
+		self::CANCELLED 	=> '#dd302a',
+		self::COMPLETED 	=> '#349ed2',
+		self::DISPATCHED 	=> '#85c62c',
 	];
 
 	protected static $statusIcons = [
-		self::PENDING 	=> 'fa.clock',
-		self::PAID		=> 'fa.moneyBillAlt',
-		self::CANCELLED => 'fa.ban',
-		self::COMPLETED => 'fa.calendarCheck'
+		self::PENDING 		=> 'fa.clock',
+		self::PAID			=> 'fa.moneyBillAlt',
+		self::CANCELLED 	=> 'fa.ban',
+		self::COMPLETED 	=> 'fa.calendarCheck',
+		self::DISPATCHED 	=> 'fa.shippingFast',
 	];
 
 	public function isOpen(): bool

@@ -64,9 +64,9 @@ class OrderFactory implements OrderFactoryContract
 		try {
 			$order = app(Order::class);
 
-			if (Arr::get($data, 'totalWithCard', '') == 0) {
+			/* if (Arr::get($data, 'totalWithCard', '') == 0) {
 				$data['status'] = OrderStatusProxy::PAID()->value();
-			}
+			} */
 
 			$order->fill(Arr::except($data, ['billpayer', 'shippingAddress', 'shipping', 'payment']));
 
