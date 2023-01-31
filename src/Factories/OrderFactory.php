@@ -83,6 +83,10 @@ class OrderFactory implements OrderFactoryContract
 			$order->shipping_city 		= $data['shippingAddress']->city;
 			$order->shipping_address 	= $data['shippingAddress']->address;
 
+			if (Arr::has($data['customAttributes'], 'store_id')) {
+				$order->store_id = Arr::get($data['customAttributes'], 'store_id');
+			}
+
 			if ($data['billpayer']->id != 'fatura-simplificada') {
 				$order->billing_firstname 	= $data['billpayer']->firstname;
 				$order->billing_lastname 	= $data['billpayer']->lastname;
