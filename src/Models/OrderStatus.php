@@ -20,6 +20,8 @@ class OrderStatus extends Enum implements OrderStatusContract
 {
 	const __DEFAULT = self::PENDING;
 
+	const IN_CREATION = 'em_criacao';
+
 	/**
 	 * Pending orders are brand new orders that have not been processed yet.
 	 */
@@ -58,7 +60,7 @@ class OrderStatus extends Enum implements OrderStatusContract
 	// $labels static property needs to be defined
 	public static $labels = [];
 
-	protected static $openStatuses = [self::PENDING, self::PAID, self::DISPATCHED, self::ON_BILLING];
+	protected static $openStatuses = [self::IN_CREATION, self::PENDING, self::PAID, self::DISPATCHED, self::ON_BILLING];
 
 	protected static $closedStatuses = [self::CANCELLED, self::COMPLETED];
 
@@ -124,6 +126,7 @@ class OrderStatus extends Enum implements OrderStatusContract
 	protected static function boot()
 	{
 		static::$labels = [
+			self::IN_CREATION => __('backoffice.order.in_creation'),
 			self::PENDING     => __('backoffice.order.pending'),
 			self::COMPLETED   => __('backoffice.order.completed'),
 			self::CANCELLED   => __('backoffice.order.cancelled'),
