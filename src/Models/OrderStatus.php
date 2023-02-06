@@ -66,6 +66,8 @@ class OrderStatus extends Enum implements OrderStatusContract
 
 	protected static $paidStatuses = [self::PAID, self::DISPATCHED, self::ON_BILLING, self::COMPLETED];
 
+	protected static $stockStatuses = [self::IN_CREATION, self::PENDING, self::PAID, self::ON_BILLING];
+
 	# para a app
 	protected static $statusColors = [
 		self::PENDING 		=> '#de972d',
@@ -106,6 +108,11 @@ class OrderStatus extends Enum implements OrderStatusContract
 	public static function getPaidStatuses(): array
 	{
 		return static::$paidStatuses;
+	}
+
+	public static function getStockStatuses(): array
+	{
+		return static::$stockStatuses;
 	}
 
 	public static function getStatusLabel(string $status): string
