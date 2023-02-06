@@ -33,6 +33,7 @@ use Vanilo\Order\Contracts\OrderNumberGenerator;
 use Vanilo\Order\Events\OrderWasCreated;
 use Vanilo\Order\Exceptions\CreateOrderException;
 use Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Vanilo\Adjustments\Models\AdjustmentTypeProxy;
 use Vanilo\Order\Models\OrderStatusProxy;
@@ -83,7 +84,7 @@ class OrderFactory implements OrderFactoryContract
 			$order->shipping_city 		= $data['shippingAddress']->city;
 			$order->shipping_address 	= $data['shippingAddress']->address;
 
-			if (Arr::has($data['customAttributes'], 'store_id')) {
+			if (Arr::has($data, 'customAttributes') && Arr::has($data['customAttributes'], 'store_id')) {
 				$order->store_id = Arr::get($data['customAttributes'], 'store_id');
 			}
 
@@ -280,7 +281,11 @@ class OrderFactory implements OrderFactoryContract
 						unset($free_item['product']);
 						unset($free_item['adjustments']);
 
-						$order->items()->create($free_item);
+						$ofitem = $order->items()->create($free_item);
+
+						if (Cache::get('settings.infinite-stock') == 0) {
+							$ofitem->product()->update(['stock' => $product->stock - $free_item['quantity']]);
+						}
 					}
 				}
 
@@ -347,7 +352,11 @@ class OrderFactory implements OrderFactoryContract
 		}
 
 		if ($item['quantity'] != 0) {
-			$order->items()->create($item);
+			$oitem = $order->items()->create($item);
+
+			if (Cache::get('settings.infinite-stock') == 0) {
+				$oitem->product()->update(['stock' => $product->stock - $item['quantity']]);
+			}
 		}
 	}
 
@@ -366,7 +375,7 @@ class OrderFactory implements OrderFactoryContract
 	private function createAddress($data, AddressType $type = null)
 	{
 		$user = Auth::guard('web')->user();
-		
+
 		$address = [];
 		$type = is_null($type) ? AddressTypeProxy::defaultValue() : $type;
 		$address['type'] = $type;
