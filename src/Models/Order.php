@@ -115,6 +115,11 @@ class Order extends Model implements OrderContract
         return $this->items->sum('total');
     }
 
+	public function itemsTotal(): float
+	{
+		return $this->items->sum('total');
+	}
+
     public function scopeOpen(Builder $query)
     {
         return $query->whereIn('status', OrderStatusProxy::getOpenStatuses());
