@@ -34,4 +34,6 @@ interface Order
      * @return float
      */
     public function total();
+
+	public function itemsTotal(): float;
 }
