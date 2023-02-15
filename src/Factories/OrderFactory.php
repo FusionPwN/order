@@ -81,30 +81,33 @@ class OrderFactory implements OrderFactoryContract
 			$order->number 				= $data['number'] ?? $this->orderNumberGenerator->generateNumber($order);
 			$order->user_id 			= $data['user_id'] ?? Auth::guard('web')->id();
 			$order->token 				= (string) Str::uuid();
-			$order->email 				= $data['shippingAddress']->email ?? null;
-			$order->phone 				= $data['shippingAddress']->phone ?? null;
 
-			$order->shipping_firstname 	= $data['shippingAddress']->firstname ?? null;
-			$order->shipping_lastname 	= $data['shippingAddress']->lastname ?? null;
-			$order->shipping_country_id = $data['shippingAddress']->country_id ?? null;
-			$order->shipping_postalcode = $data['shippingAddress']->postalcode ?? null;
-			$order->shipping_city 		= $data['shippingAddress']->city ?? null;
-			$order->shipping_address 	= $data['shippingAddress']->address ?? null;
+			if (Arr::get($data, 'type') == 'checkout' || Arr::get($data, 'type') == 'prescription') {
+				$order->email 				= $data['shippingAddress']->email;
+				$order->phone 				= $data['shippingAddress']->phone;
+
+				$order->shipping_firstname 	= $data['shippingAddress']->firstname;
+				$order->shipping_lastname 	= $data['shippingAddress']->lastname;
+				$order->shipping_country_id = $data['shippingAddress']->country_id;
+				$order->shipping_postalcode = $data['shippingAddress']->postalcode;
+				$order->shipping_city 		= $data['shippingAddress']->city;
+				$order->shipping_address 	= $data['shippingAddress']->address;
+
+				if ($data['billpayer']->id != 'fatura-simplificada') {
+					$order->billing_firstname 	= $data['billpayer']->firstname;
+					$order->billing_lastname 	= $data['billpayer']->lastname;
+					$order->billing_country_id 	= $data['billpayer']->country_id;
+					$order->billing_postalcode 	= $data['billpayer']->postalcode;
+					$order->billing_city 		= $data['billpayer']->city;
+					$order->billing_address 	= $data['billpayer']->address;
+					$order->nif 				= $data['billpayer']->nif;
+				} else {
+					$order->billing_simple = 1;
+				}
+			}
 
 			if (Arr::has($data, 'customAttributes') && Arr::has($data['customAttributes'], 'store_id')) {
 				$order->store_id = Arr::get($data['customAttributes'], 'store_id');
-			}
-
-			if ($data['billpayer']->id != 'fatura-simplificada') {
-				$order->billing_firstname 	= $data['billpayer']->firstname;
-				$order->billing_lastname 	= $data['billpayer']->lastname;
-				$order->billing_country_id 	= $data['billpayer']->country_id;
-				$order->billing_postalcode 	= $data['billpayer']->postalcode;
-				$order->billing_city 		= $data['billpayer']->city;
-				$order->billing_address 	= $data['billpayer']->address;
-				$order->nif 				= $data['billpayer']->nif;
-			} else {
-				$order->billing_simple = 1;
 			}
 
 			$order->save();
