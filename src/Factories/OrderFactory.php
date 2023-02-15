@@ -69,6 +69,10 @@ class OrderFactory implements OrderFactoryContract
 				$data['status'] = OrderStatusProxy::PAID()->value();
 			}
 
+			if (Arr::has($data, 'status')) {
+				$order->status = Arr::get($data, 'status');
+			}
+
 			$order->fill(Arr::except($data, ['billpayer', 'shippingAddress', 'shipping', 'payment']));
 
 			$order->number 				= $data['number'] ?? $this->orderNumberGenerator->generateNumber($order);

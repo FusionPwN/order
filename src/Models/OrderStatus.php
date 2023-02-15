@@ -61,12 +61,10 @@ class OrderStatus extends Enum implements OrderStatusContract
 	public static $labels = [];
 
 	protected static $openStatuses = [self::IN_CREATION, self::PENDING, self::PAID, self::DISPATCHED, self::ON_BILLING];
-
 	protected static $closedStatuses = [self::CANCELLED, self::COMPLETED];
-
 	protected static $paidStatuses = [self::PAID, self::DISPATCHED, self::ON_BILLING, self::COMPLETED];
-
 	protected static $stockStatuses = [self::IN_CREATION, self::PENDING, self::PAID, self::ON_BILLING];
+	protected static $editableStatuses = [self::IN_CREATION, self::PENDING, self::PAID];
 
 	# para a app
 	protected static $statusColors = [
@@ -95,6 +93,11 @@ class OrderStatus extends Enum implements OrderStatusContract
 		return in_array($this->value, static::$closedStatuses);
 	}
 
+	public function isEditable(): bool
+	{
+		return in_array($this->value, static::$editableStatuses);
+	}
+
 	public static function getOpenStatuses(): array
 	{
 		return static::$openStatuses;
@@ -113,6 +116,11 @@ class OrderStatus extends Enum implements OrderStatusContract
 	public static function getStockStatuses(): array
 	{
 		return static::$stockStatuses;
+	}
+
+	public static function getEditableStatuses(): array
+	{
+		return static::$editableStatuses;
 	}
 
 	public static function getStatusLabel(string $status): string
