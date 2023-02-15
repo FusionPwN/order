@@ -22,6 +22,9 @@ use Konekt\Enum\Eloquent\CastsEnums;
 use Konekt\User\Contracts\User;
 use Konekt\User\Models\UserProxy;
 use Traversable;
+use Vanilo\Adjustments\Contracts\Adjustable;
+use Vanilo\Adjustments\Support\HasAdjustmentsViaRelation;
+use Vanilo\Adjustments\Support\RecalculatesAdjustments;
 use Vanilo\Contracts\Address;
 use Vanilo\Contracts\Billpayer;
 use Vanilo\Order\Contracts\Order as OrderContract;
@@ -45,9 +48,11 @@ use Vanilo\Order\Contracts\OrderStatus;
  * @method static Order create(array $attributes = [])
  * @method static Builder open()
  */
-class Order extends Model implements OrderContract
+class Order extends Model implements OrderContract, Adjustable
 {
     use CastsEnums;
+	use HasAdjustmentsViaRelation;
+	use RecalculatesAdjustments;
 
     protected $guarded = ['id', 'created_at', 'updated_at'];
 
