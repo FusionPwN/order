@@ -64,7 +64,7 @@ class OrderStatus extends Enum implements OrderStatusContract
 	protected static $closedStatuses = [self::CANCELLED, self::COMPLETED];
 	protected static $paidStatuses = [self::PAID, self::DISPATCHED, self::ON_BILLING, self::COMPLETED];
 	protected static $stockStatuses = [self::IN_CREATION, self::PENDING, self::PAID, self::ON_BILLING];
-	protected static $editableStatuses = [self::IN_CREATION, self::PENDING, self::PAID];
+	protected static $editableStatuses = [self::IN_CREATION, self::PENDING];
 
 	# para a app
 	protected static $statusColors = [
