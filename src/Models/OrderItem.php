@@ -40,11 +40,6 @@ class OrderItem extends Model implements OrderItemContract, Adjustable
         return $this->morphTo();
     }
 
-    public function total()
-    {
-        return $this->price * $this->quantity;
-    }
-
     /**
      * Property accessor alias to the total() method
      *
@@ -54,9 +49,4 @@ class OrderItem extends Model implements OrderItemContract, Adjustable
     {
         return $this->total();
     }
-
-	public function itemsTotal(): float
-	{
-		return (float) ($this->getAdjustedPrice() * $this->quantity());
-	}
 }
