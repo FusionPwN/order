@@ -36,6 +36,7 @@ use Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Vanilo\Adjustments\Models\AdjustmentTypeProxy;
+use Vanilo\Order\Models\OrderProxy;
 use Vanilo\Order\Models\OrderStatusProxy;
 
 class OrderFactory implements OrderFactoryContract
@@ -66,21 +67,29 @@ class OrderFactory implements OrderFactoryContract
 		DB::beginTransaction();
 
 		try {
-			$order = app(Order::class);
-
 			if (Arr::get($data, 'totalWithCard', '') == 0) {
 				$data['status'] = OrderStatusProxy::PAID()->value();
 			}
 
-			if (Arr::has($data, 'status')) {
-				$order->status = Arr::get($data, 'status');
+			if (Arr::has($data, 'customAttributes') && Arr::has($data['customAttributes'], 'order_id')) {
+				$order = OrderProxy::find(Arr::get($data['customAttributes'], 'order_id'));
+			} else {
+				$order = app(Order::class);
+
+				$order->number 				= $data['number'] ?? $this->orderNumberGenerator->generateNumber($order);
+				$order->user_id 			= $data['user_id'] ?? Auth::guard('web')->id();
+				$order->token 				= (string) Str::uuid();
+
+				if (Arr::has($data, 'customAttributes') && Arr::has($data['customAttributes'], 'store_id')) {
+					$order->store_id = Arr::get($data['customAttributes'], 'store_id');
+				}
 			}
 
 			$order->fill(Arr::except($data, ['billpayer', 'shippingAddress', 'shipping', 'payment']));
 
-			$order->number 				= $data['number'] ?? $this->orderNumberGenerator->generateNumber($order);
-			$order->user_id 			= $data['user_id'] ?? Auth::guard('web')->id();
-			$order->token 				= (string) Str::uuid();
+			if (Arr::has($data, 'status')) {
+				$order->status = Arr::get($data, 'status');
+			}
 
 			if (Arr::get($data, 'type') == 'checkout' || Arr::get($data, 'type') == 'prescription') {
 				$order->email 				= $data['shippingAddress']->email;
@@ -106,18 +115,16 @@ class OrderFactory implements OrderFactoryContract
 				}
 			}
 
-			if (Arr::has($data, 'customAttributes') && Arr::has($data['customAttributes'], 'store_id')) {
-				$order->store_id = Arr::get($data['customAttributes'], 'store_id');
-			}
-
 			$order->save();
 
-			if (Auth::guard('web')->check()) {
-				if ($data['shippingAddress']->id == 'new-address') {
-					$this->createAddress($data['shippingAddress'], AddressTypeProxy::SHIPPING());
-				}
-				if ($data['billpayer']->id == 'new-address') {
-					$this->createAddress($data['billpayer'], AddressTypeProxy::BILLING());
+			if (Arr::get($data, 'type') == 'checkout' || Arr::get($data, 'type') == 'prescription') {
+				if (Auth::guard('web')->check()) {
+					if ($data['shippingAddress']->id == 'new-address') {
+						$this->createAddress($data['shippingAddress'], AddressTypeProxy::SHIPPING());
+					}
+					if ($data['billpayer']->id == 'new-address') {
+						$this->createAddress($data['billpayer'], AddressTypeProxy::BILLING());
+					}
 				}
 			}
 
@@ -144,7 +151,7 @@ class OrderFactory implements OrderFactoryContract
 				}
 			}
 
-			if (Arr::get($data, 'type') == 'checkout') {
+			if (Arr::get($data, 'type') == 'checkout' || Arr::get($data, 'type') == 'backoffice') {
 				$this->createItems(
 					$order,
 					array_map(function ($item) use ($freeShippingAdjustmentCoupon) {
@@ -258,7 +265,8 @@ class OrderFactory implements OrderFactoryContract
 				'product_id' 		=> $product->getId(),
 				'original_price' 	=> $product->getPriceVat(),
 				'name' 				=> $product->getName(),
-				'stock'				=> $product->getStock()
+				'stock'				=> $product->getStock(),
+				'vat'				=> $product->VAT_rate
 			]);
 
 			foreach ($item['adjustments']->getIterator() as $adjustment) {
@@ -272,11 +280,11 @@ class OrderFactory implements OrderFactoryContract
 						$free_item = array_replace([], $item); # Clonar array
 
 						if ($adjustment->type == AdjustmentTypeProxy::OFERTA_PROD()) {
-							$product = Product::where('sku', $adjustment->getData('sku'))->first();
-							$free_item['product_id'] = $product->id;
-							$free_item['original_price'] = $product->getPriceVat();
-							$free_item['name'] = $product->name;
-							$free_item['stock'] = $product->getStock();
+							$product_off = Product::where('sku', $adjustment->getData('sku'))->first();
+							$free_item['product_id'] = $product_off->id;
+							$free_item['original_price'] = $product_off->getPriceVat();
+							$free_item['name'] = $product_off->name;
+							$free_item['stock'] = $product_off->getStock();
 						} else {
 							if ($adjustment->type == AdjustmentTypeProxy::OFERTA_BARATO()) {
 								$item['quantity'] -= $adjustment->getData('quantity');
@@ -288,10 +296,7 @@ class OrderFactory implements OrderFactoryContract
 						$free_item['store_discount'] = 0;
 						$free_item['interval_discount'] = 0;
 
-						unset($free_item['product']);
-						unset($free_item['adjustments']);
-
-						$ofitem = $order->items()->create($free_item);
+						$ofitem = $order->items()->updateOrCreate(['product_id' => $product_off->id, 'order_id' => $order->id], Arr::except($free_item, ['product', 'adjustments']));
 
 						if (Cache::get('settings.infinite-stock') == 0) {
 							$ofitem->product()->update(['stock' => $product->stock - $free_item['quantity']]);
@@ -356,13 +361,10 @@ class OrderFactory implements OrderFactoryContract
 					);
 				}
 			}
-
-			unset($item['product']);
-			unset($item['adjustments']);
 		}
 
 		if ($item['quantity'] != 0) {
-			$oitem = $order->items()->create($item);
+			$oitem = $order->items()->updateOrCreate(['product_id' => $product->id, 'order_id' => $order->id], Arr::except($item, ['product', 'adjustments']));
 
 			if (Cache::get('settings.infinite-stock') == 0) {
 				$oitem->product()->update(['stock' => $product->stock - $item['quantity']]);
