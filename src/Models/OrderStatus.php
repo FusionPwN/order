@@ -41,6 +41,7 @@ class OrderStatus extends Enum implements OrderStatusContract
 
 	# para a app
 	protected static $statusColors = [
+		self::IN_CREATION			=> '#FF6700',
 		self::PENDING 				=> '#de972d',
 		self::PAID					=> '#3399d8',
 		self::CANCELLED 			=> '#dd302a',
@@ -51,6 +52,7 @@ class OrderStatus extends Enum implements OrderStatusContract
 	];
 
 	protected static $statusIcons = [
+		self::IN_CREATION			=> 'fa.exclamationCircle',
 		self::PENDING 				=> 'fa.clock',
 		self::PAID					=> 'fa.moneyBillAlt',
 		self::CANCELLED 			=> 'fa.ban',
