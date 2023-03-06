@@ -71,6 +71,10 @@ class OrderFactory implements OrderFactoryContract
 				$data['status'] = OrderStatusProxy::PAID()->value();
 			}
 
+			if (Arr::get($data, 'type') == 'prescription') {
+				$data['status'] = OrderStatusProxy::IN_CREATION()->value();
+			}
+
 			if (Arr::has($data, 'customAttributes') && Arr::has($data['customAttributes'], 'order_id')) {
 				$order = OrderProxy::find(Arr::get($data['customAttributes'], 'order_id'));
 			} else {
