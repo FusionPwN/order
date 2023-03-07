@@ -33,6 +33,33 @@ class OrderStatus extends Enum implements OrderStatusContract
 	// $labels static property needs to be defined
 	public static $labels = [];
 
+	protected static $visibility = [
+		self::IN_CREATION			=> false,
+		self::PENDING 				=> true,
+		self::PAID					=> true,
+		self::CANCELLED 			=> true,
+		self::COMPLETED 			=> true,
+		self::DISPATCHED 			=> true,
+		self::AWAITS_CONFIRMATION 	=> false,
+		self::AWAITS_PAYMENT 		=> false,
+		self::ON_BILLING 			=> true,
+		self::BILLED 				=> true,
+	];
+
+	public static function choices()
+	{
+		$result = [];
+		$choices = parent::choices();
+
+		foreach ($choices as $key => $value) {
+			if (self::$visibility[$key]) {
+				$result[$key] = $value;
+			}
+		}
+
+		return $result;
+	}
+
 	protected static $openStatuses 			= [self::IN_CREATION, self::PENDING, self::PAID, self::DISPATCHED, self::ON_BILLING];
 	protected static $closedStatuses 		= [self::CANCELLED, self::COMPLETED];
 	protected static $paidStatuses 			= [self::PAID, self::DISPATCHED, self::ON_BILLING, self::COMPLETED];
