@@ -89,7 +89,7 @@ class OrderFactory implements OrderFactoryContract
 				}
 			}
 
-			$order->fill(Arr::except($data, ['billpayer', 'shippingAddress', 'shipping', 'payment']));
+			$order->fill(Arr::except($data, ['billpayer', 'shippingAddress', 'shipping', 'payment', 'user_id']));
 
 			if (Arr::has($data, 'status')) {
 				$order->status = Arr::get($data, 'status');
