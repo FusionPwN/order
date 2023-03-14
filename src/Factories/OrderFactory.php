@@ -134,27 +134,6 @@ class OrderFactory implements OrderFactoryContract
 
 			$freeShippingAdjustmentCoupon = null;
 
-			$adjustments = Arr::get($data, 'adjustments', []);
-			foreach ($adjustments as $adjustment) {
-				if (AdjustmentTypeProxy::IsCoupon($adjustment->type)) {
-					$coupon = Coupon::find($adjustment->getOrigin());
-					OrderCoupon::create([
-						'order_id' => $order->id,
-						'name' => $coupon->name,
-						'value' => $coupon->value,
-						'type' => $coupon->type,
-						'code' => $coupon->code,
-						'accumulative' => $coupon->accumulative,
-						'associated_products' => $coupon->associated_products,
-						'coupon_id' => $coupon->id
-					]);
-
-					if ($adjustment->type->value() === AdjustmentTypeProxy::COUPON_FREE_SHIPPING()->value()) {
-						$freeShippingAdjustmentCoupon = $adjustment;
-					}
-				}
-			}
-
 			if (Arr::get($data, 'type') == 'checkout' || Arr::get($data, 'type') == 'backoffice') {
 				$this->createItems(
 					$order,
@@ -180,6 +159,10 @@ class OrderFactory implements OrderFactoryContract
 							$item['direct_discount'] = $direct_discount_adjustment->getAmount();
 						}
 
+						if (isset($item['mod_price'])) {
+							$item['direct_discount'] = $item['original_price'] - $item['mod_price'];
+						}
+
 						foreach ($adjustments->getIterator() as $adjustment) {
 							if (AdjustmentTypeProxy::IsCampaignDiscount($adjustment->type)) {
 								$item['discount_id'] = $adjustment->getOrigin();
@@ -196,23 +179,47 @@ class OrderFactory implements OrderFactoryContract
 					}, $items)
 				);
 
-				$shippingAdjustment = $adjustments->byType(AdjustmentTypeProxy::SHIPPING())->first();
-				$clientCardAdjustment = $adjustments->byType(AdjustmentTypeProxy::CLIENT_CARD())->first();
+				$adjustments = Arr::get($data, 'adjustments', null);
 
-				if (isset($freeShippingAdjustmentCoupon)) {
-					$order->shipping_price = $shippingAdjustment->getAmount() + $freeShippingAdjustmentCoupon->getAmount();
-				} else {
-					$order->shipping_price = $shippingAdjustment->getAmount();
-				}
+				if (null !== $adjustments) {
+					$shippingAdjustment = $adjustments->byType(AdjustmentTypeProxy::SHIPPING())->first();
+					$clientCardAdjustment = $adjustments->byType(AdjustmentTypeProxy::CLIENT_CARD())->first();
 
-				if (isset($clientCardAdjustment)) {
-					$order->card_used_balance = abs($clientCardAdjustment->getAmount());
+					foreach ($adjustments as $adjustment) {
+						if (AdjustmentTypeProxy::IsCoupon($adjustment->type)) {
+							$coupon = Coupon::find($adjustment->getOrigin());
+							OrderCoupon::create([
+								'order_id' => $order->id,
+								'name' => $coupon->name,
+								'value' => $coupon->value,
+								'type' => $coupon->type,
+								'code' => $coupon->code,
+								'accumulative' => $coupon->accumulative,
+								'associated_products' => $coupon->associated_products,
+								'coupon_id' => $coupon->id
+							]);
 
-					$card = Card::find($clientCardAdjustment->getData()['card']['id']);
+							if ($adjustment->type->value() === AdjustmentTypeProxy::COUPON_FREE_SHIPPING()->value()) {
+								$freeShippingAdjustmentCoupon = $adjustment;
+							}
+						}
+					}
 
-					$card->temp_balance_points = $card->temp_balance_points - abs($clientCardAdjustment->getAmount());
+					if (isset($freeShippingAdjustmentCoupon)) {
+						$order->shipping_price = $shippingAdjustment->getAmount() + $freeShippingAdjustmentCoupon->getAmount();
+					} else {
+						$order->shipping_price = $shippingAdjustment->getAmount();
+					}
 
-					$card->save();
+					if (isset($clientCardAdjustment)) {
+						$order->card_used_balance = abs($clientCardAdjustment->getAmount());
+
+						$card = Card::find($clientCardAdjustment->getData()['card']['id']);
+
+						$card->temp_balance_points = $card->temp_balance_points - abs($clientCardAdjustment->getAmount());
+
+						$card->save();
+					}
 				}
 			} else if (Arr::get($data, 'type') == 'prescription') {
 				$prescription = Prescription::create([
