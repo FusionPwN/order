@@ -141,6 +141,8 @@ class OrderFactory implements OrderFactoryContract
 						// Default quantity is 1 if unspecified
 						$item['quantity'] = $item['quantity'] ?? 1;
 						$item['discount_id'] = 0;
+						$item['campaign_discount'] = 0;
+						$item['coupon_discount'] = 0;
 
 						$adjustments = $item['adjustments'];
 
@@ -166,9 +168,10 @@ class OrderFactory implements OrderFactoryContract
 						foreach ($adjustments->getIterator() as $adjustment) {
 							if (AdjustmentTypeProxy::IsCampaignDiscount($adjustment->type)) {
 								$item['discount_id'] = $adjustment->getOrigin();
+								$item['campaign_discount'] = $adjustment->getAmount();
 							} else if (AdjustmentTypeProxy::IsCoupon($adjustment->type)) {
 								$item['coupon_id'] = $adjustment->getOrigin();
-
+								$item['coupon_discount'] = $adjustment->getAmount();
 								if ($adjustment->type->value() === AdjustmentTypeProxy::COUPON_FREE_SHIPPING()->value()) {
 									$freeShippingAdjustmentCoupon = $adjustment;
 								}
