@@ -57,6 +57,7 @@ class Order extends Model implements OrderContract, Adjustable
     protected $guarded = ['id', 'created_at', 'updated_at'];
 
     protected $enums = [
+		'recurrence_date' => 'date',
         'status' => 'OrderStatusProxy@enumClass'
     ];
 
