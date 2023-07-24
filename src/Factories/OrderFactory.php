@@ -18,6 +18,7 @@ use App\Models\Admin\Coupon;
 use App\Models\Admin\Discount;
 use App\Models\Admin\OrderCoupon;
 use App\Models\Admin\OrderDiscount;
+use App\Models\Admin\OrderFee;
 use App\Models\Admin\Prescription;
 use App\Models\Admin\Product;
 use App\Models\UserAddresses;
@@ -35,6 +36,7 @@ use Vanilo\Order\Exceptions\CreateOrderException;
 use Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
+use Vanilo\Adjustments\Adjusters\FeePackagingBag;
 use Vanilo\Adjustments\Models\AdjustmentTypeProxy;
 use Vanilo\Order\Models\OrderProxy;
 use Vanilo\Order\Models\OrderStatusProxy;
@@ -222,6 +224,14 @@ class OrderFactory implements OrderFactoryContract
 						$card->temp_balance_points = $card->temp_balance_points - abs($clientCardAdjustment->getAmount());
 
 						$card->save();
+					}
+
+					if (isset($feePackageingBagAdjustment)) {
+						OrderFee::create([
+							'order_id' => $order->id,
+							'type'	   => FeePackagingBag::class,
+							'value'	   => $feePackageingBagAdjustment->getAmount()
+						]);
 					}
 				}
 			} else if (Arr::get($data, 'type') == 'prescription') {
