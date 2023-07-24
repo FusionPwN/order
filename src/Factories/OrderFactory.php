@@ -189,6 +189,7 @@ class OrderFactory implements OrderFactoryContract
 				if (null !== $adjustments) {
 					$shippingAdjustment = $adjustments->byType(AdjustmentTypeProxy::SHIPPING())->first();
 					$clientCardAdjustment = $adjustments->byType(AdjustmentTypeProxy::CLIENT_CARD())->first();
+					$feePackageingBagAdjustment = $adjustments->byType(AdjustmentTypeProxy::FEE_PACKAGING_BAG())->first();
 
 					foreach ($adjustments as $adjustment) {
 						if (AdjustmentTypeProxy::IsCoupon($adjustment->type)) {
