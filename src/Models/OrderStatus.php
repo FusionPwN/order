@@ -34,14 +34,14 @@ class OrderStatus extends Enum implements OrderStatusContract
 	public static $labels = [];
 
 	protected static $visibility = [
-		self::IN_CREATION			=> false,
+		self::IN_CREATION			=> true,
 		self::PENDING 				=> true,
 		self::PAID					=> true,
 		self::CANCELLED 			=> true,
 		self::COMPLETED 			=> true,
 		self::DISPATCHED 			=> true,
-		self::AWAITS_CONFIRMATION 	=> false,
-		self::AWAITS_PAYMENT 		=> false,
+		self::AWAITS_CONFIRMATION 	=> true,
+		self::AWAITS_PAYMENT 		=> true,
 		self::ON_BILLING 			=> true,
 		self::BILLED 				=> true,
 	];
