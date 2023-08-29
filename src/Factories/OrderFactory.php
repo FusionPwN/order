@@ -321,7 +321,7 @@ class OrderFactory implements OrderFactoryContract
 
 						$ofitem = $order->items()->updateOrCreate(['product_id' => $product_off->id, 'order_id' => $order->id], Arr::except($free_item, ['product', 'adjustments']));
 
-						if (Cache::get('settings.infinite-stock') == 0) {
+						if (!$ofitem->product->isUnlimitedAvailability() && !$ofitem->product->isLimitedAvailability()) {
 							$ofitem->product()->update(['stock' => $product->stock - $free_item['quantity']]);
 						}
 					}
@@ -385,7 +385,7 @@ class OrderFactory implements OrderFactoryContract
 		if ($item['quantity'] != 0) {
 			$oitem = $order->items()->updateOrCreate(['product_id' => $product->id, 'order_id' => $order->id], Arr::except($item, ['product', 'adjustments']));
 
-			if (Cache::get('settings.infinite-stock') == 0) {
+			if (!$oitem->product->isUnlimitedAvailability() && !$oitem->product->isLimitedAvailability()) {
 				$oitem->product()->update(['stock' => $product->stock - $item['quantity']]);
 			}
 		}
