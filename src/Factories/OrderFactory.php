@@ -38,6 +38,7 @@ use Illuminate\Support\Str;
 use Vanilo\Adjustments\Models\AdjustmentTypeProxy;
 use Vanilo\Order\Models\OrderProxy;
 use Vanilo\Order\Models\OrderStatusProxy;
+use Vanilo\Product\Models\ProductStateProxy;
 
 class OrderFactory implements OrderFactoryContract
 {
@@ -322,7 +323,18 @@ class OrderFactory implements OrderFactoryContract
 						$ofitem = $order->items()->updateOrCreate(['product_id' => $product_off->id, 'order_id' => $order->id], Arr::except($free_item, ['product', 'adjustments']));
 
 						if (!$ofitem->product->isUnlimitedAvailability() && !$ofitem->product->isLimitedAvailability()) {
-							$ofitem->product()->update(['stock' => $product->stock - $free_item['quantity']]);
+							$finalStock = $product->stock - $free_item['quantity'];
+
+							$arrUpdateItem = [
+								'stock' => $finalStock
+							];
+
+							if($finalStock <= 0) {
+								$arrUpdateItem['state'] = ProductStateProxy::UNAVAILABLE()->value();
+							}
+
+							
+							$ofitem->product()->update($arrUpdateItem);
 						}
 					}
 				}
@@ -386,7 +398,17 @@ class OrderFactory implements OrderFactoryContract
 			$oitem = $order->items()->updateOrCreate(['product_id' => $product->id, 'order_id' => $order->id], Arr::except($item, ['product', 'adjustments']));
 
 			if (!$oitem->product->isUnlimitedAvailability() && !$oitem->product->isLimitedAvailability()) {
-				$oitem->product()->update(['stock' => $product->stock - $item['quantity']]);
+				$finalStock = $product->stock - $item['quantity'];
+
+				$arrUpdateItem = [
+					'stock' => $finalStock
+				];
+
+				if($finalStock <= 0) {
+					$arrUpdateItem['state'] = ProductStateProxy::UNAVAILABLE()->value();
+				}
+				
+				$oitem->product()->update($arrUpdateItem);
 			}
 		}
 	}
