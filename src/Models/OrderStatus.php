@@ -15,6 +15,7 @@ namespace Vanilo\Order\Models;
 
 use Konekt\Enum\Enum;
 use Vanilo\Order\Contracts\OrderStatus as OrderStatusContract;
+use Illuminate\Support\Facades\Cache;
 
 class OrderStatus extends Enum implements OrderStatusContract
 {
@@ -91,6 +92,15 @@ class OrderStatus extends Enum implements OrderStatusContract
 		self::AWAITS_PAYMENT 		=> 'fa.exclamationCircle',
 	];
 
+	public function __construct($value = null)
+	{
+		parent::__construct($value);
+
+		if(Cache::get('settings.products.reserved-stock-states') !== null && Cache::get('settings.products.reserved-stock-states') != ""){
+			static::$stockStatuses = explode(',', Cache::get('settings.products.reserved-stock-states'));
+		}
+	}
+
 	public function isOpen(): bool
 	{
 		return in_array($this->value, static::$openStatuses);
@@ -138,6 +148,7 @@ class OrderStatus extends Enum implements OrderStatusContract
 
 	public static function getStockStatuses(): array
 	{
+		self::boot();
 		return static::$stockStatuses;
 	}
 
@@ -173,6 +184,11 @@ class OrderStatus extends Enum implements OrderStatusContract
 
 	protected static function boot()
 	{
+
+		if(Cache::get('settings.products.reserved-stock-states') !== null && Cache::get('settings.products.reserved-stock-states') != ""){
+			static::$stockStatuses = explode(',', Cache::get('settings.products.reserved-stock-states'));
+		}
+
 		static::$labels = [
 			self::IN_CREATION 			=> __('backoffice.order.in_creation'),
 			self::PENDING     			=> __('backoffice.order.pending'),
