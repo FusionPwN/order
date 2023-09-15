@@ -100,12 +100,18 @@ class OrderFactory implements OrderFactoryContract
 				$order->email 				= $data['shippingAddress']->email;
 				$order->phone 				= $data['shippingAddress']->phone;
 
-				$order->shipping_firstname 	= $data['shippingAddress']->firstname;
-				$order->shipping_lastname 	= $data['shippingAddress']->lastname;
-				$order->shipping_country_id = $data['shippingAddress']->country_id;
-				$order->shipping_postalcode = $data['shippingAddress']->postalcode;
-				$order->shipping_city 		= $data['shippingAddress']->city;
-				$order->shipping_address 	= $data['shippingAddress']->address;
+				if ($data['shippingAddress']->id == 'no-address') {
+					$order->shipping_firstname 	= $data['shippingAddress']->firstname;
+					$order->shipping_lastname 	= $data['shippingAddress']->lastname;
+					$order->shipping_country_id = $data['shippingAddress']->country_id;
+				} else {
+					$order->shipping_firstname 	= $data['shippingAddress']->firstname;
+					$order->shipping_lastname 	= $data['shippingAddress']->lastname;
+					$order->shipping_country_id = $data['shippingAddress']->country_id;
+					$order->shipping_postalcode = $data['shippingAddress']->postalcode;
+					$order->shipping_city 		= $data['shippingAddress']->city;
+					$order->shipping_address 	= $data['shippingAddress']->address;
+				}
 
 				if ($data['billpayer']->id != 'fatura-simplificada') {
 					$order->billing_firstname 	= $data['billpayer']->firstname;
