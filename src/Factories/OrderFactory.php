@@ -90,7 +90,7 @@ class OrderFactory implements OrderFactoryContract
 					$order->store_id = Arr::get($data['customAttributes'], 'store_id');
 				} else {
 					$store = Store::default()->first();
-					$order->store_id = $store->id ?? 0;
+					$order->store_id = $store->id ?? null;
 				}
 			}
 
