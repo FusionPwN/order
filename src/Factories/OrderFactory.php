@@ -20,6 +20,7 @@ use App\Models\Admin\OrderCoupon;
 use App\Models\Admin\OrderDiscount;
 use App\Models\Admin\Prescription;
 use App\Models\Admin\Product;
+use App\Models\Admin\Store;
 use App\Models\UserAddresses;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
@@ -87,6 +88,9 @@ class OrderFactory implements OrderFactoryContract
 
 				if (Arr::has($data, 'customAttributes') && Arr::has($data['customAttributes'], 'store_id')) {
 					$order->store_id = Arr::get($data['customAttributes'], 'store_id');
+				} else {
+					$store = Store::default()->first();
+					$order->store_id = $store->id ?? 0;
 				}
 			}
 
