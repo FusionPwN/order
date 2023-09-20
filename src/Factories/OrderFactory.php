@@ -209,7 +209,7 @@ class OrderFactory implements OrderFactoryContract
 							'order_id' => $order->id,
 							'name' => $coupon->name,
 							'value' => $coupon->value,
-							'type' => $coupon->type,
+							'type' => $coupon->type->value(),
 							'code' => $coupon->code,
 							'accumulative' => $coupon->accumulative,
 							'associated_products' => $coupon->associated_products,
@@ -393,7 +393,7 @@ class OrderFactory implements OrderFactoryContract
 						[
 							'name' => $coupon->name,
 							'value' => $coupon->value,
-							'type' => $coupon->type,
+							'type' => $coupon->type->value(),
 							'code' => $coupon->code,
 							'accumulative' => $coupon->accumulative,
 							'associated_products' => $coupon->associated_products,
