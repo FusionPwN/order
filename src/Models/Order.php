@@ -54,7 +54,7 @@ class Order extends Model implements OrderContract, Adjustable
 	use HasAdjustmentsViaRelation;
 	use RecalculatesAdjustments;
 
-    protected $guarded = ['id', 'created_at', 'updated_at'];
+    protected $guarded = ['id', 'updated_at'];
 
 	protected $casts = [
 		'recurrence_date' => 'date'
