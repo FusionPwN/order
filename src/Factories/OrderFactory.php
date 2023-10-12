@@ -372,6 +372,8 @@ class OrderFactory implements OrderFactoryContract
 							'end_date' => $discount->end_date,
 							'discount_type' => $discount->discount_type,
 							'value' => $discount->value,
+							'type_card' => $discount->type_card,
+							'value_card' => $discount->value_card,
 							'offer_number' => $discount->offer_number,
 							'purchase_number' => $discount->purchase_number,
 							'referencia' => $discount->referencia,

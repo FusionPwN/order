@@ -25,7 +25,7 @@ class OrderStatus extends Enum implements OrderStatusContract
 	const AWAITS_PAYMENT 			= 'aguarda_pagamento';
 	const PENDING 					= 'pendente';
 	const PAID 						= 'paga';
-	const IN_WAREHOUSE_PREPARATION 	= 'em_preparacao_aramazem';
+	const IN_WAREHOUSE_PREPARATION 	= 'em_preparacao_armazem';
 	const PROCESSING 				= 'em_processamento';
 	const ON_BILLING 				= 'em_faturacao';
 	const BILLED 					= 'faturada';
