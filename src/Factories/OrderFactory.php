@@ -40,6 +40,8 @@ use Vanilo\Adjustments\Models\AdjustmentTypeProxy;
 use Vanilo\Order\Models\OrderProxy;
 use Vanilo\Order\Models\OrderStatusProxy;
 use Vanilo\Product\Models\ProductStateProxy;
+use App\Models\Admin\OrderFee;
+use Vanilo\Adjustments\Adjusters\FeePackagingBag;
 
 class OrderFactory implements OrderFactoryContract
 {
@@ -178,7 +180,7 @@ class OrderFactory implements OrderFactoryContract
 					if (isset($item['mod_price'])) {
 						$item['direct_discount'] = $item['original_price'] - $item['mod_price'];
 					}
-
+					
 					foreach ($adjustments->getIterator() as $adjustment) {
 						if (AdjustmentTypeProxy::IsCampaignDiscount($adjustment->type)) {
 							$item['discount_id'] = $adjustment->getOrigin();
@@ -190,7 +192,10 @@ class OrderFactory implements OrderFactoryContract
 								$freeShippingAdjustmentCoupon = $adjustment;
 							}
 						}
+						
 					}
+
+					$feePackageingBagAdjustment = $adjustments->byType(AdjustmentTypeProxy::FEE_PACKAGING_BAG())->first();
 
 					return $item;
 				}, $orderItems)
@@ -233,6 +238,14 @@ class OrderFactory implements OrderFactoryContract
 					$card = Card::find($clientCardAdjustment->getData()['card']['id']);
 					$card->temp_balance_points = $card->temp_balance_points - abs($clientCardAdjustment->getAmount());
 					$card->save();
+				}
+
+				if (isset($feePackageingBagAdjustment)) {
+					OrderFee::create([
+						'order_id' => $order->id,
+						'type'	   => FeePackagingBag::class,
+						'value'	   => $feePackageingBagAdjustment->getAmount()
+					]);
 				}
 			}
 
