@@ -333,7 +333,11 @@ class OrderFactory implements OrderFactoryContract
 							$free_item['stock'] = $product_off->getStock();
 						} else {
 							if ($adjustment->type == AdjustmentTypeProxy::OFERTA_BARATO()) {
-								$item['quantity'] -= $adjustment->getData('quantity');
+								$product_off = Product::where('sku', $adjustment->getData('sku'))->first();
+								$free_item['product_id'] = $product_off->id;
+								$free_item['original_price'] = $product_off->getPriceVat();
+								$free_item['name'] = $product_off->name;
+								$free_item['stock'] = $product_off->getStock();
 							}
 						}
 
@@ -418,22 +422,20 @@ class OrderFactory implements OrderFactoryContract
 			}
 		}
 
-		if ($item['quantity'] != 0) {
-			$oitem = $order->items()->updateOrCreate(['product_id' => $product->id, 'order_id' => $order->id], Arr::except($item, ['product', 'adjustments']));
+		$oitem = $order->items()->create($item);
 
-			if (!$oitem->product->isUnlimitedAvailability() && !$oitem->product->isLimitedAvailability()) {
-				$finalStock = $product->stock - $item['quantity'];
+		if (!$oitem->product->isUnlimitedAvailability() && !$oitem->product->isLimitedAvailability()) {
+			$finalStock = $product->stock - $item['quantity'];
 
-				$arrUpdateItem = [
-					'stock' => $finalStock
-				];
+			$arrUpdateItem = [
+				'stock' => $finalStock
+			];
 
-				if($finalStock <= 0) {
-					$arrUpdateItem['state'] = ProductStateProxy::UNAVAILABLE()->value();
-				}
-				
-				$oitem->product()->update($arrUpdateItem);
+			if($finalStock <= 0) {
+				$arrUpdateItem['state'] = ProductStateProxy::UNAVAILABLE()->value();
 			}
+			
+			$oitem->product()->update($arrUpdateItem);
 		}
 	}
 
