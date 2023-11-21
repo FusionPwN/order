@@ -333,7 +333,6 @@ class OrderFactory implements OrderFactoryContract
 							$free_item['stock'] = $product_off->getStock();
 						} else {
 							if ($adjustment->type == AdjustmentTypeProxy::OFERTA_BARATO()) {
-								$item['quantity'] -= $adjustment->getData('quantity');
 								$product_off = Product::where('sku', $adjustment->getData('sku'))->first();
 								$free_item['product_id'] = $product_off->id;
 								$free_item['original_price'] = $product_off->getPriceVat();
