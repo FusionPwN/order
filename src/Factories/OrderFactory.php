@@ -147,60 +147,8 @@ class OrderFactory implements OrderFactoryContract
 
 			$freeShippingAdjustmentCoupon = null;
 
-			$orderItems = Arr::where($items, function ($value, $key) {
-				return $value['type'] == 'product';
-			});
-
-			$this->createItems(
-				$order,
-				array_map(function ($item) use ($freeShippingAdjustmentCoupon) {
-					// Default quantity is 1 if unspecified
-					$item['quantity'] = $item['quantity'] ?? 1;
-					$item['discount_id'] = 0;
-					$item['campaign_discount'] = 0;
-					$item['coupon_discount'] = 0;
-
-					$adjustments = $item['adjustments'];
-
-					$interval_discount_adjustment = $adjustments->byType(AdjustmentTypeProxy::INTERVAL_DISCOUNT())->first();
-					if (isset($interval_discount_adjustment)) {
-						$item['interval_discount'] = $interval_discount_adjustment->getAmount();
-					}
-
-					$store_discount_adjustment = $adjustments->byType(AdjustmentTypeProxy::STORE_DISCOUNT())->first();
-					if (isset($store_discount_adjustment)) {
-						$item['store_discount'] = $store_discount_adjustment->getAmount();
-					}
-
-					$direct_discount_adjustment = $adjustments->byType(AdjustmentTypeProxy::DIRECT_DISCOUNT())->first();
-					if (isset($direct_discount_adjustment)) {
-						$item['direct_discount'] = $direct_discount_adjustment->getAmount();
-					}
-
-					if (isset($item['mod_price'])) {
-						$item['direct_discount'] = $item['original_price'] - $item['mod_price'];
-					}
-					
-					foreach ($adjustments->getIterator() as $adjustment) {
-						if (AdjustmentTypeProxy::IsCampaignDiscount($adjustment->type)) {
-							$item['discount_id'] = $adjustment->getOrigin();
-							$item['campaign_discount'] = $adjustment->getAmount();
-						} else if (AdjustmentTypeProxy::IsCoupon($adjustment->type)) {
-							$item['coupon_id'] = $adjustment->getOrigin();
-							$item['coupon_discount'] = $adjustment->getAmount();
-							if ($adjustment->type->value() === AdjustmentTypeProxy::COUPON_FREE_SHIPPING()->value()) {
-								$freeShippingAdjustmentCoupon = $adjustment;
-							}
-						}
-						
-					}
-
-					return $item;
-				}, $orderItems)
-			);
-
 			$adjustments = Arr::get($data, 'adjustments', null);
-
+			$unfoldable_items = [];
 			if (null !== $adjustments) {
 				$shippingAdjustment = $adjustments->byType(AdjustmentTypeProxy::SHIPPING())->first();
 				$clientCardAdjustment = $adjustments->byType(AdjustmentTypeProxy::CLIENT_CARD())->first();
@@ -223,8 +171,14 @@ class OrderFactory implements OrderFactoryContract
 						if ($adjustment->type->value() === AdjustmentTypeProxy::COUPON_FREE_SHIPPING()->value()) {
 							$freeShippingAdjustmentCoupon = $adjustment;
 						}
+					} else if (AdjustmentTypeProxy::IsCampaignDiscount($adjustment->type)) {
+						$item_id = $adjustment->getData('item_id');
+						if (null !== $item_id) {
+							$unfoldable_items[$item_id . 'x' . $adjustment->amount][] = $adjustment;
+						}
 					}
 				}
+
 
 				if (isset($freeShippingAdjustmentCoupon)) {
 					$order->shipping_price = $shippingAdjustment->getAmount() + $freeShippingAdjustmentCoupon->getAmount();
@@ -247,6 +201,101 @@ class OrderFactory implements OrderFactoryContract
 					]);
 				}
 			}
+
+			$orderItems = Arr::where($items, function ($value, $key) {
+				return $value['type'] == 'product';
+			});
+
+			if (count($unfoldable_items) > 0) {
+				foreach ($unfoldable_items as $unfoldable_id => $adjustments) {
+					$id = explode('x', $unfoldable_id)[0];
+					$item = null;
+
+					foreach ($orderItems as $key => $oitem) {
+						if ($oitem['id'] == $id) {
+							$item = $oitem;
+							break;
+						}
+					}
+
+					if (null !== $item) {
+						$clone = $item;
+						$clone['new-line'] = true;
+						$clone['quantity'] = count($adjustments);
+
+						foreach ($adjustments as $adjustment) {
+							$clone['adjustments_collection'][] = $adjustment;
+						}
+
+						$orderItems[] = $clone;
+					}
+				}
+
+				foreach ($unfoldable_items as $unfoldable_id => $adjustments) {
+					$id = explode('x', $unfoldable_id)[0];
+
+					foreach ($orderItems as $key => $oitem) {
+						if ($oitem['id'] == $id && !array_key_exists('new-line', $oitem)) {
+							unset($orderItems[$key]);
+						}
+					}
+				}
+			}
+
+			$this->createItems(
+				$order,
+				array_map(function ($item) use ($freeShippingAdjustmentCoupon) {
+					// Default quantity is 1 if unspecified
+					$item['quantity'] = $item['quantity'] ?? 1;
+					$item['discount_id'] = 0;
+					$item['campaign_discount'] = 0;
+					$item['coupon_discount'] = 0;
+
+					$adjustments 			= $item['adjustments'];
+					foreach ($adjustments as $adjustment) {
+						$item['adjustments_collection'][] = $adjustment;
+					}
+					$adjustments_collection = $item['adjustments_collection'];
+
+					$interval_discount_adjustment = $adjustments->byType(AdjustmentTypeProxy::INTERVAL_DISCOUNT())->first();
+					if (isset($interval_discount_adjustment)) {
+						$item['interval_discount'] = $interval_discount_adjustment->getAmount();
+					}
+
+					$store_discount_adjustment = $adjustments->byType(AdjustmentTypeProxy::STORE_DISCOUNT())->first();
+					if (isset($store_discount_adjustment)) {
+						$item['store_discount'] = $store_discount_adjustment->getAmount();
+					}
+
+					$direct_discount_adjustment = $adjustments->byType(AdjustmentTypeProxy::DIRECT_DISCOUNT())->first();
+					if (isset($direct_discount_adjustment)) {
+						$item['direct_discount'] = $direct_discount_adjustment->getAmount();
+					}
+
+					if (isset($item['mod_price'])) {
+						$item['direct_discount'] = $item['original_price'] - $item['mod_price'];
+					}
+
+					foreach ($adjustments_collection as $adjustment) {
+						if (AdjustmentTypeProxy::IsCampaignDiscount($adjustment->type)) {
+							$item['discount_id'] = $adjustment->getOrigin();
+							$item['campaign_discount'] = $adjustment->getAmount();
+
+							if (null !== $adjustment->getData('item_id') && $adjustment->getAmount() != 0) {
+								$item['price'] = $item['product']->getPriceVat() - (float) $adjustment->getData('single_amount');
+							}
+						} else if (AdjustmentTypeProxy::IsCoupon($adjustment->type)) {
+							$item['coupon_id'] = $adjustment->getOrigin();
+							$item['coupon_discount'] = $adjustment->getAmount();
+							if ($adjustment->type->value() === AdjustmentTypeProxy::COUPON_FREE_SHIPPING()->value()) {
+								$freeShippingAdjustmentCoupon = $adjustment;
+							}
+						}
+					}
+
+					return $item;
+				}, $orderItems)
+			);
 
 			if (Arr::get($data, 'type') == 'prescription') {
 				$prescription_item = Arr::where($items, function ($value, $key) {
@@ -315,7 +364,7 @@ class OrderFactory implements OrderFactoryContract
 				'vat'				=> $product->VAT_rate
 			]);
 
-			foreach ($item['adjustments']->getIterator() as $adjustment) {
+			foreach ($item['adjustments_collection'] as $adjustment) {
 				if (AdjustmentTypeProxy::IsVisualSeparator($adjustment->type)) {
 					if (
 						$adjustment->type == AdjustmentTypeProxy::OFERTA_BARATO() ||
@@ -355,11 +404,11 @@ class OrderFactory implements OrderFactoryContract
 								'stock' => $finalStock
 							];
 
-							if($finalStock <= 0) {
+							if ($finalStock <= 0) {
 								$arrUpdateItem['state'] = ProductStateProxy::UNAVAILABLE()->value();
 							}
 
-							
+
 							$ofitem->product()->update($arrUpdateItem);
 						}
 					}
@@ -432,10 +481,10 @@ class OrderFactory implements OrderFactoryContract
 					'stock' => $finalStock
 				];
 
-				if($finalStock <= 0) {
+				if ($finalStock <= 0) {
 					$arrUpdateItem['state'] = ProductStateProxy::UNAVAILABLE()->value();
 				}
-				
+
 				$oitem->product()->update($arrUpdateItem);
 			}
 		}
