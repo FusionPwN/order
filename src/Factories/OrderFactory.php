@@ -439,6 +439,8 @@ class OrderFactory implements OrderFactoryContract
 							'value' => $discount->value,
 							'type_card' => $discount->type_card,
 							'value_card' => $discount->value_card,
+							'type_coupon' => $discount->type_coupon,
+							'value_coupon' => $discount->value_coupon,
 							'offer_number' => $discount->offer_number,
 							'purchase_number' => $discount->purchase_number,
 							'referencia' => $discount->referencia,
