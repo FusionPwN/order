@@ -50,6 +50,7 @@ class OrderFactory implements OrderFactoryContract
 
 	/* Variavel que incrementa sempre que se insere um registo na tabela order_discounts para depois associar os numeros aodesconto */
 	private $countDiscount = 1;
+	private $orderType = "";
 
 	public function __construct(OrderNumberGenerator $generator)
 	{
@@ -68,6 +69,8 @@ class OrderFactory implements OrderFactoryContract
 			throw new CreateOrderException(__('Can not create an order without items'));
 		}
 
+		$this->orderType = Arr::get($data, 'type');
+		
 		DB::beginTransaction();
 
 		try {
@@ -441,6 +444,8 @@ class OrderFactory implements OrderFactoryContract
 							'value_card' => $discount->value_card,
 							'type_coupon' => $discount->type_coupon,
 							'value_coupon' => $discount->value_coupon,
+							'start_date_coupon' => $discount->start_date_coupon,
+							'end_date_coupon' => $discount->end_date_coupon,
 							'offer_number' => $discount->offer_number,
 							'purchase_number' => $discount->purchase_number,
 							'referencia' => $discount->referencia,
@@ -474,7 +479,11 @@ class OrderFactory implements OrderFactoryContract
 		}
 
 		if ($item['quantity'] != 0) {
-			$oitem = $order->items()->create($item);
+			if($this->orderType == "backoffice"){
+				$oitem = $order->items()->updateOrCreate(['product_id' => $product->id, 'order_id' => $order->id], Arr::except($item, ['product', 'adjustments']));
+			} else {
+				$oitem = $order->items()->create($item);
+			}
 
 			if (!$oitem->product->isUnlimitedAvailability() && !$oitem->product->isLimitedAvailability()) {
 				$finalStock = $product->stock - $item['quantity'];
