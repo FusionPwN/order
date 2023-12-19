@@ -474,6 +474,13 @@ class OrderFactory implements OrderFactoryContract
 							'coupon_id' => $coupon->id
 						]
 					);
+
+					if($coupon->isRegister()){
+						$userEnc = Auth::guard('web')->user();
+
+						$userEnc->used_coupon = 1;
+						$userEnc->save();
+					}
 				}
 			}
 		}
