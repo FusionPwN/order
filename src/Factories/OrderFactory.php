@@ -377,21 +377,11 @@ class OrderFactory implements OrderFactoryContract
 
 						$free_item = array_replace([], $item); # Clonar array
 
-						if ($adjustment->type == AdjustmentTypeProxy::OFERTA_PROD()) {
-							$product_off = Product::where('sku', $adjustment->getData('sku'))->first();
-							$free_item['product_id'] = $product_off->id;
-							$free_item['original_price'] = $product_off->getPriceVat();
-							$free_item['name'] = $product_off->name;
-							$free_item['stock'] = $product_off->getStock();
-						} else {
-							if ($adjustment->type == AdjustmentTypeProxy::OFERTA_BARATO()) {
-								$product_off = Product::where('sku', $adjustment->getData('sku'))->first();
-								$free_item['product_id'] = $product_off->id;
-								$free_item['original_price'] = $product_off->getPriceVat();
-								$free_item['name'] = $product_off->name;
-								$free_item['stock'] = $product_off->getStock();
-							}
-						}
+						$product_off = Product::where('sku', $adjustment->getData('sku'))->first();
+						$free_item['product_id'] = $product_off->id;
+						$free_item['original_price'] = $product_off->getPriceVat();
+						$free_item['name'] = $product_off->name;
+						$free_item['stock'] = $product_off->getStock();
 
 						$free_item['quantity'] = $adjustment->getData('quantity');
 						$free_item['price'] = 0;
