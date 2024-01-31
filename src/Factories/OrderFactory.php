@@ -443,7 +443,8 @@ class OrderFactory implements OrderFactoryContract
 							'num_min_buy' => $discount->num_min_buy,
 							'minimum_value' => $discount->minimum_value,
 							'description' => $discount->description,
-							'associate' => $this->countDiscount
+							'associate' => $this->countDiscount,
+							'can_stack_direct_discount' => $discount->can_stack_direct_discount
 						]
 					);
 
