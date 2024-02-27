@@ -42,6 +42,7 @@ use Vanilo\Order\Models\OrderStatusProxy;
 use Vanilo\Product\Models\ProductStateProxy;
 use App\Models\Admin\OrderFee;
 use Vanilo\Adjustments\Adjusters\FeePackagingBag;
+use Vanilo\Adjustments\Contracts\Adjustment;
 
 class OrderFactory implements OrderFactoryContract
 {
@@ -70,7 +71,7 @@ class OrderFactory implements OrderFactoryContract
 		}
 
 		$this->orderType = Arr::get($data, 'type');
-		
+
 		DB::beginTransaction();
 
 		try {
@@ -371,38 +372,38 @@ class OrderFactory implements OrderFactoryContract
 				if (AdjustmentTypeProxy::IsVisualSeparator($adjustment->type)) {
 					if (
 						$adjustment->type == AdjustmentTypeProxy::OFERTA_BARATO() ||
-						$adjustment->type == AdjustmentTypeProxy::OFERTA_PROD_IGUAL() ||
-						$adjustment->type == AdjustmentTypeProxy::OFERTA_PROD()
+						$adjustment->type == AdjustmentTypeProxy::OFERTA_PROD_IGUAL()
 					) {
-
-						$free_item = array_replace([], $item); # Clonar array
-
 						$product_off = Product::where('sku', $adjustment->getData('sku'))->first();
-						$free_item['product_id'] = $product_off->id;
-						$free_item['original_price'] = $product_off->getPriceVat();
-						$free_item['name'] = $product_off->name;
-						$free_item['stock'] = $product_off->getStock();
 
-						$free_item['quantity'] = $adjustment->getData('quantity');
-						$free_item['price'] = 0;
-						$free_item['store_discount'] = 0;
-						$free_item['interval_discount'] = 0;
+						$this->_createGrift($order, $item, $product_off, $adjustment, $adjustment->getData('quantity'));
+					} else if ($adjustment->type == AdjustmentTypeProxy::OFERTA_PROD()) {
+						$selected_gifts = $adjustment->getData('selected_gifts');
+						$counted_indexes = [];
+						$gifts = collect();
+						foreach ($selected_gifts as $key => $gift) {
+							$qty = 1;
 
-						$ofitem = $order->items()->updateOrCreate(['product_id' => $product_off->id, 'order_id' => $order->id], Arr::except($free_item, ['product', 'adjustments']));
-
-						if (!$ofitem->product->isUnlimitedAvailability() && !$ofitem->product->isLimitedAvailability()) {
-							$finalStock = $product->stock - $free_item['quantity'];
-
-							$arrUpdateItem = [
-								'stock' => $finalStock
-							];
-
-							if ($finalStock <= 0) {
-								$arrUpdateItem['state'] = ProductStateProxy::UNAVAILABLE()->value();
+							foreach ($selected_gifts as $key_d => $gift_d) {
+								if (!in_array($key_d, $counted_indexes) && $key_d != $key && $gift_d == $gift) {
+									$qty++;
+									$counted_indexes[] = $key_d;
+								}
 							}
 
+							if (!in_array($key, $counted_indexes)) {
+								$gifts[] = (object) [
+									'id' 		=> $gift,
+									'quantity' 	=> $qty
+								];
+							}
 
-							$ofitem->product()->update($arrUpdateItem);
+							$counted_indexes[] = $key;
+						}
+
+						foreach ($gifts as $gift) {
+							$product_off = Product::find($gift->id);
+							$this->_createGrift($order, $item, $product_off, $adjustment, $gift->quantity);
 						}
 					}
 				}
@@ -466,7 +467,7 @@ class OrderFactory implements OrderFactoryContract
 						]
 					);
 
-					if($coupon->isRegister()){
+					if ($coupon->isRegister()) {
 						$userEnc = Auth::guard('web')->user();
 
 						$userEnc->used_coupon = 1;
@@ -477,7 +478,7 @@ class OrderFactory implements OrderFactoryContract
 		}
 
 		if ($item['quantity'] != 0) {
-			if($this->orderType == "backoffice"){
+			if ($this->orderType == "backoffice") {
 				$oitem = $order->items()->updateOrCreate(['product_id' => $product->id, 'order_id' => $order->id], Arr::except($item, ['product', 'adjustments']));
 			} else {
 				$oitem = $order->items()->create($item);
@@ -495,6 +496,40 @@ class OrderFactory implements OrderFactoryContract
 				}
 
 				$oitem->product()->update($arrUpdateItem);
+			}
+		}
+	}
+
+	protected function _createGrift(Order $order, array $item, ?Product $product_off, Adjustment $adjustment, int $quantity)
+	{
+		if (null !== $product_off) {
+			$free_item = array_replace([], $item); # Clonar array
+
+			$free_item['product_id'] = $product_off->id;
+			$free_item['original_price'] = $product_off->getPriceVat();
+			$free_item['name'] = $product_off->name;
+			$free_item['stock'] = $product_off->getStock();
+
+			$free_item['quantity'] = $quantity;
+			$free_item['price'] = 0;
+			$free_item['store_discount'] = 0;
+			$free_item['interval_discount'] = 0;
+
+			$ofitem = $order->items()->updateOrCreate(['product_id' => $product_off->id, 'order_id' => $order->id], Arr::except($free_item, ['product', 'adjustments']));
+
+			if (!$ofitem->product->isUnlimitedAvailability() && !$ofitem->product->isLimitedAvailability()) {
+				$finalStock = $item['product']->stock - $free_item['quantity'];
+
+				$arrUpdateItem = [
+					'stock' => $finalStock
+				];
+
+				if ($finalStock <= 0) {
+					$arrUpdateItem['state'] = ProductStateProxy::UNAVAILABLE()->value();
+				}
+
+
+				$ofitem->product()->update($arrUpdateItem);
 			}
 		}
 	}
