@@ -363,6 +363,7 @@ class OrderFactory implements OrderFactoryContract
 				'product_type' 		=> $product->morphTypeName(),
 				'product_id' 		=> $product->getId(),
 				'original_price' 	=> $product->getPriceVat(),
+				'cost_price'		=> $product->cost_price,
 				'name' 				=> $product->getName(),
 				'stock'				=> $product->getStock(),
 				'vat'				=> $product->VAT_rate
@@ -506,6 +507,7 @@ class OrderFactory implements OrderFactoryContract
 			$free_item = array_replace([], $item); # Clonar array
 
 			$free_item['product_id'] = $product_off->id;
+			$free_item['cost_price'] = $product_off->cost_price;
 			$free_item['original_price'] = $product_off->getPriceVat();
 			$free_item['name'] = $product_off->name;
 			$free_item['stock'] = $product_off->getStock();
