@@ -324,10 +324,6 @@ class OrderFactory implements OrderFactoryContract
 			}
 
 			$order->save();
-
-			if ($this->needs_typesense_update) {
-				event(new ProductsUpdate());
-			}
 		} catch (\Exception $e) {
 			DB::rollBack();
 
@@ -337,6 +333,10 @@ class OrderFactory implements OrderFactoryContract
 		DB::commit();
 
 		event(new OrderWasCreated($order));
+
+		if ($this->needs_typesense_update) {
+			event(new ProductsUpdate());
+		}
 
 		return $order;
 	}
