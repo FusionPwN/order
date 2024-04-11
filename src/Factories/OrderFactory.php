@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace Vanilo\Order\Factories;
 
+use App\Events\ProductsUpdate;
 use App\Models\Admin\Card;
 use App\Models\Admin\Coupon;
 use App\Models\Admin\Discount;
@@ -52,6 +53,8 @@ class OrderFactory implements OrderFactoryContract
 	/* Variavel que incrementa sempre que se insere um registo na tabela order_discounts para depois associar os numeros aodesconto */
 	private $countDiscount = 1;
 	private $orderType = "";
+
+	private $needs_typesense_update = false;
 
 	public function __construct(OrderNumberGenerator $generator)
 	{
@@ -321,6 +324,10 @@ class OrderFactory implements OrderFactoryContract
 			}
 
 			$order->save();
+
+			if ($this->needs_typesense_update) {
+				event(new ProductsUpdate());
+			}
 		} catch (\Exception $e) {
 			DB::rollBack();
 
@@ -499,6 +506,7 @@ class OrderFactory implements OrderFactoryContract
 				}
 
 				$oitem->product()->update($arrUpdateItem);
+				$this->needs_typesense_update = true;
 			}
 		}
 	}
@@ -534,6 +542,7 @@ class OrderFactory implements OrderFactoryContract
 
 
 				$ofitem->product()->update($arrUpdateItem);
+				$this->needs_typesense_update = true;
 			}
 		}
 	}
