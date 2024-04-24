@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace Vanilo\Order\Factories;
 
 use App\Events\ProductsUpdate;
+use App\Generators\DocumentNumberGenerator;
 use App\Models\Admin\Card;
 use App\Models\Admin\Coupon;
 use App\Models\Admin\Discount;
@@ -49,16 +50,16 @@ class OrderFactory implements OrderFactoryContract
 {
 	/** @var OrderNumberGenerator */
 	protected $orderNumberGenerator;
+	protected $documentNumberGenerator;
 
 	/* Variavel que incrementa sempre que se insere um registo na tabela order_discounts para depois associar os numeros aodesconto */
 	private $countDiscount = 1;
 	private $orderType = "";
 
-	private $needs_typesense_update = false;
-
-	public function __construct(OrderNumberGenerator $generator)
+	public function __construct(OrderNumberGenerator $generator, DocumentNumberGenerator $documentNumberGenerator)
 	{
-		$this->orderNumberGenerator = $generator;
+		$this->orderNumberGenerator 	= $generator;
+		$this->documentNumberGenerator 	= $documentNumberGenerator;
 	}
 
 	/**
@@ -315,8 +316,9 @@ class OrderFactory implements OrderFactoryContract
 					$prescription = (object) Arr::first($prescription_item);
 				} else {
 					$prescription = Prescription::create([
-						'info' => '',
-						'obs' => ''
+						'number' 	=> $this->documentNumberGenerator->generateNumber(Prescription::class, 'PRESC_'),
+						'info' 		=> '',
+						'obs' 		=> ''
 					]);
 				}
 
