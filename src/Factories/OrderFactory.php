@@ -56,6 +56,8 @@ class OrderFactory implements OrderFactoryContract
 	private $countDiscount = 1;
 	private $orderType = "";
 
+	protected bool $needs_typesense_update = false;
+
 	public function __construct(OrderNumberGenerator $generator, DocumentNumberGenerator $documentNumberGenerator)
 	{
 		$this->orderNumberGenerator 	= $generator;
