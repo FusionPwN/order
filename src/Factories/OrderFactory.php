@@ -23,11 +23,9 @@ use App\Models\Admin\OrderDiscount;
 use App\Models\Admin\Prescription;
 use App\Models\Admin\Product;
 use App\Models\Admin\Store;
-use App\Models\UserAddresses;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Konekt\Address\Contracts\AddressType;
-use Konekt\Address\Models\AddressProxy;
 use Konekt\Address\Models\AddressTypeProxy;
 use Vanilo\Contracts\Buyable;
 use Vanilo\Order\Contracts\Order;
@@ -36,7 +34,6 @@ use Vanilo\Order\Contracts\OrderNumberGenerator;
 use Vanilo\Order\Events\OrderWasCreated;
 use Vanilo\Order\Exceptions\CreateOrderException;
 use Auth;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Vanilo\Adjustments\Models\AdjustmentTypeProxy;
 use Vanilo\Order\Models\OrderProxy;
@@ -530,6 +527,9 @@ class OrderFactory implements OrderFactoryContract
 			$free_item['price'] = 0;
 			$free_item['store_discount'] = 0;
 			$free_item['interval_discount'] = 0;
+			$free_item['coupon_discount'] = 0;
+			$free_item['direct_discount'] = 0;
+			$free_item['campaign_discount'] = -$product_off->getPriceVat();
 
 			$ofitem = $order->items()->updateOrCreate(['product_id' => $product_off->id, 'order_id' => $order->id], Arr::except($free_item, ['product', 'adjustments']));
 
