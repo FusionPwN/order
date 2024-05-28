@@ -160,6 +160,7 @@ class OrderFactory implements OrderFactoryContract
 				$shippingAdjustment = $adjustments->byType(AdjustmentTypeProxy::SHIPPING())->first();
 				$clientCardAdjustment = $adjustments->byType(AdjustmentTypeProxy::CLIENT_CARD())->first();
 				$feePackageingBagAdjustment = $adjustments->byType(AdjustmentTypeProxy::FEE_PACKAGING_BAG())->first();
+				$freeProductCouponAdjustment = $adjustments->byType(AdjustmentTypeProxy::COUPON_FREE_PRODUCT())->first();
 
 				foreach ($adjustments as $adjustment) {
 					if (AdjustmentTypeProxy::IsCoupon($adjustment->type)) {
@@ -251,9 +252,21 @@ class OrderFactory implements OrderFactoryContract
 				}
 			}
 
+			if (null !== $freeProductCouponAdjustment) {
+				$dummy_item = $orderItems[0];
+				$dummy_item['id'] = 'coupon-gift-dummy-item';
+				$dummy_item['adjustments'] = collect([$freeProductCouponAdjustment]);
+				$dummy_item['adjustments_collection'] = [];
+				$dummy_item['quantity'] = 0;
+				$dummy_item['price'] = 0;
+				$dummy_item['weight'] = 0;
+
+				$orderItems[] = $dummy_item;
+			}
+
 			$this->createItems(
 				$order,
-				array_map(function ($item) use ($freeShippingAdjustmentCoupon) {
+				array_map(function ($item) use ($freeShippingAdjustmentCoupon, $freeProductCouponAdjustment) {
 					// Default quantity is 1 if unspecified
 					$item['quantity'] = $item['quantity'] ?? 1;
 					$item['discount_id'] = 0;
@@ -266,19 +279,21 @@ class OrderFactory implements OrderFactoryContract
 					}
 					$adjustments_collection = $item['adjustments_collection'];
 
-					$interval_discount_adjustment = $adjustments->byType(AdjustmentTypeProxy::INTERVAL_DISCOUNT())->first();
-					if (isset($interval_discount_adjustment)) {
-						$item['interval_discount'] = $interval_discount_adjustment->getAmount();
-					}
+					if ($item['id'] != 'coupon-gift-dummy-item') {
+						$interval_discount_adjustment = $adjustments->byType(AdjustmentTypeProxy::INTERVAL_DISCOUNT())->first();
+						if (isset($interval_discount_adjustment)) {
+							$item['interval_discount'] = $interval_discount_adjustment->getAmount();
+						}
 
-					$store_discount_adjustment = $adjustments->byType(AdjustmentTypeProxy::STORE_DISCOUNT())->first();
-					if (isset($store_discount_adjustment)) {
-						$item['store_discount'] = $store_discount_adjustment->getAmount();
-					}
+						$store_discount_adjustment = $adjustments->byType(AdjustmentTypeProxy::STORE_DISCOUNT())->first();
+						if (isset($store_discount_adjustment)) {
+							$item['store_discount'] = $store_discount_adjustment->getAmount();
+						}
 
-					$direct_discount_adjustment = $adjustments->byType(AdjustmentTypeProxy::DIRECT_DISCOUNT())->first();
-					if (isset($direct_discount_adjustment)) {
-						$item['direct_discount'] = $direct_discount_adjustment->getAmount();
+						$direct_discount_adjustment = $adjustments->byType(AdjustmentTypeProxy::DIRECT_DISCOUNT())->first();
+						if (isset($direct_discount_adjustment)) {
+							$item['direct_discount'] = $direct_discount_adjustment->getAmount();
+						}
 					}
 
 					if (isset($item['mod_price']) && $item['mod_price'] > 0) {
@@ -344,17 +359,8 @@ class OrderFactory implements OrderFactoryContract
 
 	protected function createItems(Order $order, array $items)
 	{
-		$that = $this;
-		$hasBuyables = collect($items)->contains(function ($item) use ($that) {
-			return $that->itemContainsABuyable($item);
-		});
-
-		if (!$hasBuyables) { // This is faster
-			$order->items()->createMany($items);
-		} else {
-			foreach ($items as $item) {
-				$this->createItem($order, $item);
-			}
+		foreach ($items as $item) {
+			$this->createItem($order, $item);
 		}
 	}
 
@@ -388,7 +394,10 @@ class OrderFactory implements OrderFactoryContract
 						$product_off = Product::where('sku', $adjustment->getData('sku'))->first();
 
 						$this->_createGrift($order, $item, $product_off, $adjustment, $adjustment->getData('quantity'));
-					} else if ($adjustment->type == AdjustmentTypeProxy::OFERTA_PROD()) {
+					} else if (
+						$adjustment->type == AdjustmentTypeProxy::OFERTA_PROD() ||
+						$adjustment->type == AdjustmentTypeProxy::COUPON_FREE_PRODUCT()
+					) {
 						$selected_gifts = $adjustment->getData('selected_gifts');
 						$counted_indexes = [];
 						$gifts = collect();
@@ -488,7 +497,7 @@ class OrderFactory implements OrderFactoryContract
 			}
 		}
 
-		if ($item['quantity'] != 0) {
+		if ($item['quantity'] != 0 && $item['id'] != 'coupon-gift-dummy-item') {
 			if ($this->orderType == "backoffice") {
 				$oitem = $order->items()->updateOrCreate(['product_id' => $product->id, 'order_id' => $order->id], Arr::except($item, ['product', 'adjustments']));
 			} else {
@@ -496,7 +505,7 @@ class OrderFactory implements OrderFactoryContract
 			}
 
 			if (!$oitem->product->isUnlimitedAvailability() && !$oitem->product->isLimitedAvailability()) {
-				$finalStock = $product->stock - $item['quantity'];
+				$finalStock = $product->getStock() - $item['quantity'];
 
 				$arrUpdateItem = [
 					'stock' => $finalStock
@@ -522,6 +531,8 @@ class OrderFactory implements OrderFactoryContract
 			$free_item['original_price'] = $product_off->getPriceVat();
 			$free_item['name'] = $product_off->name;
 			$free_item['stock'] = $product_off->getStock();
+			$free_item['weight'] = $product_off->weight();
+			$free_item['product'] = $product_off;
 
 			$free_item['quantity'] = $quantity;
 			$free_item['price'] = 0;
@@ -529,12 +540,24 @@ class OrderFactory implements OrderFactoryContract
 			$free_item['interval_discount'] = 0;
 			$free_item['coupon_discount'] = 0;
 			$free_item['direct_discount'] = 0;
-			$free_item['campaign_discount'] = -$product_off->getPriceVat();
+			$free_item['campaign_discount'] = 0;
+
+			if (
+				$adjustment->type == AdjustmentTypeProxy::OFERTA_BARATO() ||
+				$adjustment->type == AdjustmentTypeProxy::OFERTA_PROD_IGUAL()
+			) {
+				$free_item['campaign_discount'] = -$product_off->getPriceVat();
+			} else if (
+				$adjustment->type == AdjustmentTypeProxy::OFERTA_PROD() ||
+				$adjustment->type == AdjustmentTypeProxy::COUPON_FREE_PRODUCT()
+			) {
+				$free_item['coupon_discount'] = -$product_off->getPriceVat();
+			}
 
 			$ofitem = $order->items()->updateOrCreate(['product_id' => $product_off->id, 'order_id' => $order->id], Arr::except($free_item, ['product', 'adjustments']));
 
 			if (!$ofitem->product->isUnlimitedAvailability() && !$ofitem->product->isLimitedAvailability()) {
-				$finalStock = $item['product']->stock - $free_item['quantity'];
+				$finalStock = $free_item['product']->getStock() - $free_item['quantity'];
 
 				$arrUpdateItem = [
 					'stock' => $finalStock
