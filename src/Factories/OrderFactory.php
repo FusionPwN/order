@@ -266,7 +266,7 @@ class OrderFactory implements OrderFactoryContract
 
 			$this->createItems(
 				$order,
-				array_map(function ($item) use ($freeShippingAdjustmentCoupon, $freeProductCouponAdjustment) {
+				array_map(function ($item) use ($freeShippingAdjustmentCoupon) {
 					// Default quantity is 1 if unspecified
 					$item['quantity'] = $item['quantity'] ?? 1;
 					$item['discount_id'] = 0;
