@@ -252,7 +252,7 @@ class OrderFactory implements OrderFactoryContract
 				}
 			}
 
-			if (null !== $freeProductCouponAdjustment) {
+			if (isset($freeProductCouponAdjustment)) {
 				$dummy_item = $orderItems[0];
 				$dummy_item['id'] = 'coupon-gift-dummy-item';
 				$dummy_item['adjustments'] = collect([$freeProductCouponAdjustment]);
