@@ -172,7 +172,7 @@ class OrderFactory implements OrderFactoryContract
 							'type' => $coupon->type->value(),
 							'code' => $coupon->code,
 							'accumulative' => $coupon->accumulative,
-							'associated_products' => $coupon->associated_products,
+							'min_value_only_for_aplicable' => $coupon->min_value_only_for_aplicable,
 							'coupon_id' => $coupon->id
 						]);
 
@@ -482,7 +482,7 @@ class OrderFactory implements OrderFactoryContract
 							'type' => $coupon->type->value(),
 							'code' => $coupon->code,
 							'accumulative' => $coupon->accumulative,
-							'associated_products' => $coupon->associated_products,
+							'min_value_only_for_aplicable' => $coupon->min_value_only_for_aplicable,
 							'coupon_id' => $coupon->id
 						]
 					);
