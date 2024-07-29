@@ -94,7 +94,6 @@ class OrderFactory implements OrderFactoryContract
 				$order->number 				= $data['number'] ?? $this->orderNumberGenerator->generateNumber($order);
 				$order->user_id 			= $data['user_id'] ?? Auth::guard('web')->id();
 				$order->token 				= (string) Str::uuid();
-				$order->device              = $agent->isMobile() ? 'mobile':'desktop';
 
 				if (Arr::has($data, 'customAttributes') && Arr::has($data['customAttributes'], 'store_id')) {
 					$order->store_id = Arr::get($data['customAttributes'], 'store_id');
