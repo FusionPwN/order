@@ -94,6 +94,7 @@ class OrderFactory implements OrderFactoryContract
 				$order->number 				= $data['number'] ?? $this->orderNumberGenerator->generateNumber($order);
 				$order->user_id 			= $data['user_id'] ?? Auth::guard('web')->id();
 				$order->token 				= (string) Str::uuid();
+				$order->device              = $agent->isMobile() ? 'mobile':'desktop';
 
 				if (Arr::has($data, 'customAttributes') && Arr::has($data['customAttributes'], 'store_id')) {
 					$order->store_id = Arr::get($data['customAttributes'], 'store_id');
@@ -173,7 +174,11 @@ class OrderFactory implements OrderFactoryContract
 							'code' => $coupon->code,
 							'accumulative' => $coupon->accumulative,
 							'min_value_only_for_aplicable' => $coupon->min_value_only_for_aplicable,
-							'coupon_id' => $coupon->id
+							'coupon_id' => $coupon->id,
+							'affiliate_user_id' => $coupon->affiliate_user_id,
+							'commission_value' => $coupon->commission_value,
+							'commission_value_type' => $coupon->commission_value_type,
+							'commission_type' => $coupon->commission_type
 						]);
 
 						if ($adjustment->type->value() === AdjustmentTypeProxy::COUPON_FREE_SHIPPING()->value()) {
@@ -483,7 +488,11 @@ class OrderFactory implements OrderFactoryContract
 							'code' => $coupon->code,
 							'accumulative' => $coupon->accumulative,
 							'min_value_only_for_aplicable' => $coupon->min_value_only_for_aplicable,
-							'coupon_id' => $coupon->id
+							'coupon_id' => $coupon->id,
+							'affiliate_user_id' => $coupon->affiliate_user_id,
+							'commission_value' => $coupon->commission_value,
+							'commission_value_type' => $coupon->commission_value_type,
+							'commission_type' => $coupon->commission_type
 						]
 					);
 
