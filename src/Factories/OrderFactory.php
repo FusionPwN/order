@@ -177,7 +177,9 @@ class OrderFactory implements OrderFactoryContract
 							'affiliate_user_id' => $coupon->affiliate_user_id,
 							'commission_value' => $coupon->commission_value,
 							'commission_value_type' => $coupon->commission_value_type,
-							'commission_type' => $coupon->commission_type
+							'commission_type' => $coupon->commission_type,
+							'validate_domains' => $coupon->validate_domains,
+							'domains' => $coupon->domains
 						]);
 
 						if ($adjustment->type->value() === AdjustmentTypeProxy::COUPON_FREE_SHIPPING()->value()) {
@@ -491,7 +493,9 @@ class OrderFactory implements OrderFactoryContract
 							'affiliate_user_id' => $coupon->affiliate_user_id,
 							'commission_value' => $coupon->commission_value,
 							'commission_value_type' => $coupon->commission_value_type,
-							'commission_type' => $coupon->commission_type
+							'commission_type' => $coupon->commission_type,
+							'validate_domains' => $coupon->validate_domains,
+							'domains' => $coupon->domains
 						]
 					);
 
