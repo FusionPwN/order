@@ -400,6 +400,8 @@ class OrderFactory implements OrderFactoryContract
 						$product_off = Product::where('sku', $adjustment->getData('sku'))->first();
 
 						$this->_createGrift($order, $item, $product_off, $adjustment, $adjustment->getData('quantity'));
+
+						$item['campaign_discount'] = 0;
 					} else if (
 						$adjustment->type == AdjustmentTypeProxy::OFERTA_PROD() ||
 						$adjustment->type == AdjustmentTypeProxy::COUPON_FREE_PRODUCT()
@@ -431,6 +433,8 @@ class OrderFactory implements OrderFactoryContract
 							$product_off = Product::find($gift->id);
 							$this->_createGrift($order, $item, $product_off, $adjustment, $gift->quantity);
 						}
+
+						$item['campaign_discount'] = 0;
 					}
 				}
 
