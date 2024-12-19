@@ -98,7 +98,45 @@ class OrderStatus extends Enum implements OrderStatusContract
 		self::REFUNDED 					=> '#FF0000',
 	];
 
+	protected static $statusClass = [
+		self::IN_CREATION 					=> "text-teal",
+		self::AWAITS_CONFIRMATION 			=> "text-orange",
+		self::PENDING 						=> "text-orange",
+		self::AWAITS_PAYMENT 				=> "text-orange",
+		self::PAID 							=> "text-teal",
+		self::DISPATCHED 					=> "text-teal",
+		self::ON_BILLING 					=> "text-secondary",
+		self::BILLED 						=> "text-teal",
+		self::COMPLETED 					=> "text-dark",
+		self::CANCELLED  					=> "text-danger",
+		self::IN_WAREHOUSE_PREPARATION 		=> "text-warning",
+		self::PROCESSING 					=> "text-warning",
+		self::REFUNDING 					=> "text-warning",
+		self::REFUNDED 						=> "text-danger",
+		self::IN_PREPARATION_PHARMACY_STORE => "text-warning",
+		self::READY_FOR_PICKUP 				=> "text-teal",
+	];
+
 	protected static $statusIcons = [
+		self::IN_CREATION 					=> "fas fa-file-signature", 
+		self::AWAITS_CONFIRMATION 			=> "fas fa-check-double",
+		self::PENDING 						=> "far fa-question-circle",
+		self::AWAITS_PAYMENT 				=> "fas fa-user-clock",
+		self::PAID 							=> "far fa-dot-circle",
+		self::DISPATCHED 					=> "far fa-arrow-alt-circle-right",
+		self::ON_BILLING 					=> "fas fa-file-invoice-dollar",
+		self::BILLED 						=> "fas fa-file-invoice-dollar",
+		self::COMPLETED 					=> "far fa-check-circle",
+		self::CANCELLED  					=> "far fa-times-circle",
+		self::IN_WAREHOUSE_PREPARATION 		=> "fas fa-warehouse",
+		self::PROCESSING 					=> "fas fa-spinner",
+		self::REFUNDING 					=> "fas fa-undo",
+		self::REFUNDED 						=> "fas fa-undo-alt",
+		self::IN_PREPARATION_PHARMACY_STORE => "fas fa-store",
+		self::READY_FOR_PICKUP 				=> "fas fa-user-clock",
+	];
+
+	protected static $apiStatusIcons = [
 		self::IN_CREATION				=> 'fa.exclamationCircle',
 		self::PENDING 					=> 'fa.clock',
 		self::PAID						=> 'fa.moneyBillAlt',
@@ -198,9 +236,29 @@ class OrderStatus extends Enum implements OrderStatusContract
 		return self::$statusColors[$status];
 	}
 
+	public static function getApiStatusIcon(string $status): string
+	{
+		return self::$apiStatusIcons[$status];
+	}
+
 	public static function getStatusIcon(string $status): string
 	{
 		return self::$statusIcons[$status];
+	}
+
+	public static function getStatusClass(string $status): string
+	{
+		return self::$statusClass[$status];
+	}
+
+	public function getIcon(): string
+	{
+		return static::$statusIcons[$this->value];
+	}
+	
+	public function getClass(): string
+	{
+		return static::$statusClass[$this->value];
 	}
 
 	protected static function boot()
