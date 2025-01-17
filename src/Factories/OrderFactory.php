@@ -193,9 +193,11 @@ class OrderFactory implements OrderFactoryContract
 					}
 				}
 
-				$order->original_shipping_price = (float) $shippingAdjustment->getData('amount');
-				$order->shipping_price = $shippingAdjustment->getAmount();
-				$order->shipping_cause = $shippingAdjustment->getData('cause');
+				if(!session()->has('list_code')){
+					$order->original_shipping_price = (float) $shippingAdjustment->getData('amount');
+					$order->shipping_price = $shippingAdjustment->getAmount();
+					$order->shipping_cause = $shippingAdjustment->getData('cause');
+				}
 
 				if (isset($freeShippingAdjustmentCoupon)) {
 					$order->shipping_price = $shippingAdjustment->getAmount() + $freeShippingAdjustmentCoupon->getAmount();
