@@ -304,7 +304,7 @@ class OrderFactory implements OrderFactoryContract
 						}
 					}
 
-					if (isset($item['mod_price']) && $item['mod_price'] > 0) {
+					if (isset($item['mod_price'])) {
 						$item['direct_discount'] = $item['original_price'] - $item['mod_price'];
 					}
 
