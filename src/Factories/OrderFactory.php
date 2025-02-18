@@ -161,6 +161,8 @@ class OrderFactory implements OrderFactoryContract
 				$clientCardAdjustment = $adjustments->byType(AdjustmentTypeProxy::CLIENT_CARD())->first();
 				$feePackageingBagAdjustment = $adjustments->byType(AdjustmentTypeProxy::FEE_PACKAGING_BAG())->first();
 				$freeProductCouponAdjustment = $adjustments->byType(AdjustmentTypeProxy::COUPON_FREE_PRODUCT())->first();
+				$paymentAdjustment = $adjustments->byType(AdjustmentTypeProxy::PAYMENT_FEE())->first();
+
 
 				foreach ($adjustments as $adjustment) {
 					if (AdjustmentTypeProxy::IsCoupon($adjustment->type)) {
@@ -197,6 +199,11 @@ class OrderFactory implements OrderFactoryContract
 					$order->original_shipping_price = (float) $shippingAdjustment->getData('amount');
 					$order->shipping_price = $shippingAdjustment->getAmount();
 					$order->shipping_cause = $shippingAdjustment->getData('cause');
+				}
+
+				if(isset($paymentAdjustment))
+				{
+					$order->payment_fee = $paymentAdjustment->getAmount();
 				}
 
 				if (isset($freeShippingAdjustmentCoupon)) {
