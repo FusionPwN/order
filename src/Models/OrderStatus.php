@@ -99,22 +99,22 @@ class OrderStatus extends Enum implements OrderStatusContract
 	];
 
 	protected static $statusClass = [
-		self::IN_CREATION 					=> "text-teal",
-		self::AWAITS_CONFIRMATION 			=> "text-orange",
+		self::IN_CREATION 					=> "text-in-creation",
+		self::AWAITS_CONFIRMATION 			=> "text-awaits-confirmation",
 		self::PENDING 						=> "text-orange",
-		self::AWAITS_PAYMENT 				=> "text-orange",
+		self::AWAITS_PAYMENT 				=> "text-awaits-payment",
 		self::PAID 							=> "text-teal",
-		self::DISPATCHED 					=> "text-teal",
+		self::DISPATCHED 					=> "text-dispatched",
 		self::ON_BILLING 					=> "text-secondary",
-		self::BILLED 						=> "text-teal",
+		self::BILLED 						=> "text-billed",
 		self::COMPLETED 					=> "text-dark",
-		self::CANCELLED  					=> "text-danger",
-		self::IN_WAREHOUSE_PREPARATION 		=> "text-warning",
+		self::CANCELLED  					=> "text-cancelled",
+		self::IN_WAREHOUSE_PREPARATION 		=> "text-warehouse-preparation",
 		self::PROCESSING 					=> "text-warning",
-		self::REFUNDING 					=> "text-warning",
+		self::REFUNDING 					=> "text-refunding",
 		self::REFUNDED 						=> "text-danger",
-		self::IN_PREPARATION_PHARMACY_STORE => "text-warning",
-		self::READY_FOR_PICKUP 				=> "text-teal",
+		self::IN_PREPARATION_PHARMACY_STORE => "text-store-preparation",
+		self::READY_FOR_PICKUP 				=> "text-ready-for-pickup",
 	];
 
 	protected static $statusIcons = [
