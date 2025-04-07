@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace Vanilo\Order\Factories;
 
+use App\Events\OrderStatusChanged;
 use App\Events\ProductsUpdate;
 use App\Generators\DocumentNumberGenerator;
 use App\Models\Admin\Card;
@@ -366,6 +367,7 @@ class OrderFactory implements OrderFactoryContract
 		DB::commit();
 
 		event(new OrderWasCreated($order));
+		event(new OrderStatusChanged($order, $order->status->value(), $order->status->value(), 'backoffice.order.events.was-created'));
 
 		if ($this->needs_typesense_update) {
 			event(new ProductsUpdate());
