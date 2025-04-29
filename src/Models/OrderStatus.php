@@ -84,18 +84,22 @@ class OrderStatus extends Enum implements OrderStatusContract
 
 	# para a app
 	protected static $statusColors = [
-		self::IN_CREATION				=> '#FF6700',
-		self::PENDING 					=> '#de972d',
-		self::PAID						=> '#3399d8',
-		self::CANCELLED 				=> '#dd302a',
-		self::COMPLETED 				=> '#349ed2',
-		self::DISPATCHED 				=> '#85c62c',
-		self::AWAITS_CONFIRMATION 		=> '#FF6700',
-		self::AWAITS_PAYMENT 			=> '#FF6700',
-		self::IN_WAREHOUSE_PREPARATION 	=> '#FFD700',
-		self::PROCESSING 				=> '#FFD700',
-		self::REFUNDING 				=> '#FFA500',
-		self::REFUNDED 					=> '#FF0000',
+		self::IN_CREATION					=> '#FF6700',
+		self::AWAITS_CONFIRMATION 			=> '#FF6700',
+		self::PENDING 						=> '#de972d',
+		self::AWAITS_PAYMENT 				=> '#FF6700',
+		self::PAID							=> '#3399d8',
+		self::DISPATCHED 					=> '#85c62c',
+		self::ON_BILLING					=> '#6c757d',
+		self::BILLED 						=> '#24A982',
+		self::COMPLETED 					=> '#349ed2',
+		self::CANCELLED 					=> '#dd302a',
+		self::IN_WAREHOUSE_PREPARATION 		=> '#FFD700',
+		self::PROCESSING 					=> '#FFD700',
+		self::REFUNDING 					=> '#FFA500',
+		self::REFUNDED 						=> '#FF0000',
+		self::IN_PREPARATION_PHARMACY_STORE => "#D4A61E",
+		self::READY_FOR_PICKUP 				=> "#4CDFB3"
 	];
 
 	protected static $statusClass = [
@@ -137,18 +141,22 @@ class OrderStatus extends Enum implements OrderStatusContract
 	];
 
 	protected static $apiStatusIcons = [
-		self::IN_CREATION				=> 'fa.exclamationCircle',
-		self::PENDING 					=> 'fa.clock',
-		self::PAID						=> 'fa.moneyBillAlt',
-		self::CANCELLED 				=> 'fa.ban',
-		self::COMPLETED 				=> 'fa.calendarCheck',
-		self::DISPATCHED 				=> 'fa.shippingFast',
-		self::AWAITS_CONFIRMATION 		=> 'fa.exclamationCircle',
-		self::AWAITS_PAYMENT 			=> 'fa.exclamationCircle',
-		self::IN_WAREHOUSE_PREPARATION 	=> 'fa.warehouse',
-		self::PROCESSING 				=> 'fa.spinner',
-		self::REFUNDING 				=> 'fa.undo',
-		self::REFUNDED 					=> 'fa.undoAlt',
+		self::IN_CREATION					=> 'fa.exclamationCircle',
+		self::PENDING 						=> 'fa.clock',
+		self::PAID							=> 'fa.moneyBillAlt',
+		self::CANCELLED 					=> 'fa.ban',
+		self::COMPLETED 					=> 'fa.calendarCheck',
+		self::DISPATCHED 					=> 'fa.shippingFast',
+		self::ON_BILLING					=> 'fa.moneyBillAlt',
+		self::BILLED 						=> 'fa.moneyBillAlt',
+		self::AWAITS_CONFIRMATION 			=> 'fa.exclamationCircle',
+		self::AWAITS_PAYMENT 				=> 'fa.exclamationCircle',
+		self::IN_WAREHOUSE_PREPARATION 		=> 'fa.warehouse',
+		self::PROCESSING 					=> 'fa.spinner',
+		self::REFUNDING 					=> 'fa.undo',
+		self::REFUNDED 						=> 'fa.undoAlt',
+		self::IN_PREPARATION_PHARMACY_STORE => "fa.warehouse",
+		self::READY_FOR_PICKUP 				=> "fa.clock",
 	];
 
 	public function __construct($value = null)
