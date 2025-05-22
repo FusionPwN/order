@@ -27,26 +27,42 @@ class OrderItem extends Model implements OrderItemContract, Adjustable
 	use RecalculatesAdjustments;
 	use ProductItem;
 	use CheckoutItemFunctions;
-	
-    protected $guarded = ['id', 'created_at', 'updated_at'];
 
-    public function order()
-    {
-        return $this->belongsTo(OrderProxy::modelClass());
-    }
+	protected $guarded = ['id', 'created_at', 'updated_at'];
 
-    public function product()
-    {
-        return $this->morphTo();
-    }
+	protected $casts = [
+		'properties' => 'object'
+	];
 
-    /**
-     * Property accessor alias to the total() method
-     *
-     * @return float
-     */
-    public function getTotalAttribute()
-    {
-        return $this->total();
-    }
+	protected $appends = ['prices'];
+
+	public function order()
+	{
+		return $this->belongsTo(OrderProxy::modelClass());
+	}
+
+	public function product()
+	{
+		return $this->morphTo();
+	}
+
+	/**
+	 * Property accessor alias to the total() method
+	 *
+	 * @return float
+	 */
+	public function getTotalAttribute()
+	{
+		return $this->total();
+	}
+
+	/**
+	 * Property accessor alias to the prices() method
+	 *
+	 * @return float
+	 */
+	public function getPricesAttribute()
+	{
+		return $this->prices;
+	}
 }
