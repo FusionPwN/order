@@ -32,6 +32,7 @@ class OrderStatus extends Enum implements OrderStatusContract
 	const BILLED 							= 'faturada';
 	const DISPATCHED 						= 'expedida';
 	const READY_FOR_PICKUP					= 'pronta_para_levantamento';
+	const READY_FOR_DELIVERY				= 'pronta_para_entrega';
 	const COMPLETED 						= 'concluida';
 	const REFUNDING 						= 'em_devolucao';
 	const REFUNDED 							= 'devolvido';
@@ -55,6 +56,7 @@ class OrderStatus extends Enum implements OrderStatusContract
 		self::IN_WAREHOUSE_PREPARATION 			=> true,
 		self::IN_PREPARATION_PHARMACY_STORE 	=> true,
 		self::READY_FOR_PICKUP 					=> true,
+		self::READY_FOR_DELIVERY 				=> true,
 		self::PROCESSING 						=> true,
 		self::REFUNDING 						=> true,
 		self::REFUNDED 							=> true,
@@ -74,9 +76,9 @@ class OrderStatus extends Enum implements OrderStatusContract
 		return $result;
 	}
 
-	protected static $openStatuses 			= [self::IN_CREATION, self::AWAITS_CONFIRMATION, self::PENDING, self::AWAITS_PAYMENT, self::PAID, self::DISPATCHED, self::ON_BILLING, self::IN_WAREHOUSE_PREPARATION, self::PROCESSING,self::REFUNDING,self::IN_PREPARATION_PHARMACY_STORE,self::READY_FOR_PICKUP];
+	protected static $openStatuses 			= [self::IN_CREATION, self::AWAITS_CONFIRMATION, self::PENDING, self::AWAITS_PAYMENT, self::PAID, self::DISPATCHED, self::ON_BILLING, self::IN_WAREHOUSE_PREPARATION, self::PROCESSING,self::REFUNDING,self::IN_PREPARATION_PHARMACY_STORE,self::READY_FOR_PICKUP,self::READY_FOR_DELIVERY];
 	protected static $closedStatuses 		= [self::CANCELLED, self::COMPLETED, self::REFUNDED ];
-	protected static $paidStatuses 			= [self::PAID, self::DISPATCHED, self::ON_BILLING, self::BILLED, self::COMPLETED, self::IN_WAREHOUSE_PREPARATION, self::PROCESSING,self::REFUNDING,self::IN_PREPARATION_PHARMACY_STORE,self::READY_FOR_PICKUP];
+	protected static $paidStatuses 			= [self::PAID, self::DISPATCHED, self::ON_BILLING, self::BILLED, self::COMPLETED, self::IN_WAREHOUSE_PREPARATION, self::PROCESSING,self::REFUNDING,self::IN_PREPARATION_PHARMACY_STORE,self::READY_FOR_PICKUP,self::READY_FOR_DELIVERY];
 	protected static $stockStatuses 		= [self::IN_CREATION, self::AWAITS_CONFIRMATION, self::PENDING, self::AWAITS_PAYMENT, self::PAID, self::DISPATCHED, self::ON_BILLING, self::IN_WAREHOUSE_PREPARATION, self::PROCESSING,self::IN_PREPARATION_PHARMACY_STORE ];
 	protected static $editableStatuses 		= [self::IN_CREATION, self::AWAITS_CONFIRMATION];
 	protected static $payableStatuses 		= [self::PENDING, self::AWAITS_PAYMENT];
@@ -99,7 +101,8 @@ class OrderStatus extends Enum implements OrderStatusContract
 		self::REFUNDING 					=> '#FFA500',
 		self::REFUNDED 						=> '#FF0000',
 		self::IN_PREPARATION_PHARMACY_STORE => "#D4A61E",
-		self::READY_FOR_PICKUP 				=> "#4CDFB3"
+		self::READY_FOR_PICKUP 				=> "#4CDFB3",
+		self::READY_FOR_DELIVERY 			=> "#4CDFB3"
 	];
 
 	protected static $statusClass = [
@@ -119,6 +122,7 @@ class OrderStatus extends Enum implements OrderStatusContract
 		self::REFUNDED 						=> "text-danger",
 		self::IN_PREPARATION_PHARMACY_STORE => "text-store-preparation",
 		self::READY_FOR_PICKUP 				=> "text-ready-for-pickup",
+		self::READY_FOR_DELIVERY 			=> "text-ready-for-delivery",
 	];
 
 	protected static $statusIcons = [
@@ -138,6 +142,7 @@ class OrderStatus extends Enum implements OrderStatusContract
 		self::REFUNDED 						=> "fas fa-undo-alt",
 		self::IN_PREPARATION_PHARMACY_STORE => "fas fa-store",
 		self::READY_FOR_PICKUP 				=> "fas fa-user-clock",
+		self::READY_FOR_DELIVERY 			=> "fas fa-truck-loading",
 	];
 
 	protected static $apiStatusIcons = [
@@ -157,6 +162,7 @@ class OrderStatus extends Enum implements OrderStatusContract
 		self::REFUNDED 						=> 'fa.undoAlt',
 		self::IN_PREPARATION_PHARMACY_STORE => "fa.warehouse",
 		self::READY_FOR_PICKUP 				=> "fa.clock",
+		self::READY_FOR_DELIVERY 			=> "fa.clock",
 	];
 
 	public function __construct($value = null)
@@ -293,6 +299,7 @@ class OrderStatus extends Enum implements OrderStatusContract
 			self::REFUNDING 						=> __('backoffice.order.refunding'),
 			self::REFUNDED 							=> __('backoffice.order.refunded'),
 			self::COMPLETED   						=> __('backoffice.order.completed'),
+			self::READY_FOR_DELIVERY 				=> __('backoffice.order.Ready for delivery'),
 		];
 	}
 }
