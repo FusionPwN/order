@@ -404,6 +404,8 @@ class OrderFactory implements OrderFactoryContract
 				'vat'				=> $product->VAT_rate
 			]);
 
+			$controlPercNumProductOffer = 0; //Como o desconto de percentagem e numerario é aplicado a cada produto quando tem a opção de oferta so pode ofrecer 1 vez
+
 			foreach ($item['adjustments_collection'] as $adjustment) {
 				if (AdjustmentTypeProxy::IsVisualSeparator($adjustment->type)) {
 					if (
@@ -495,6 +497,40 @@ class OrderFactory implements OrderFactoryContract
 					$this->countDiscount++;
 				} else if (AdjustmentTypeProxy::IsCoupon($adjustment->type)) {
 					$coupon = Coupon::find($adjustment->getOrigin());
+
+					if($adjustment->type == AdjustmentTypeProxy::COUPON_PERC_NUM() && $coupon->offers_products == 1 && $controlPercNumProductOffer == 0)
+					{
+						$selected_gifts = $adjustment->getData('selected_gifts');
+						$counted_indexes = [];
+						$gifts = collect();
+						foreach ($selected_gifts as $key => $gift) {
+							$qty = 1;
+
+							foreach ($selected_gifts as $key_d => $gift_d) {
+								if (!in_array($key_d, $counted_indexes) && $key_d != $key && $gift_d == $gift) {
+									$qty++;
+									$counted_indexes[] = $key_d;
+								}
+							}
+
+							if (!in_array($key, $counted_indexes)) {
+								$gifts[] = (object) [
+									'id' 		=> $gift,
+									'quantity' 	=> $qty
+								];
+							}
+
+							$counted_indexes[] = $key;
+						}
+
+						foreach ($gifts as $gift) {
+							$product_off = Product::find($gift->id);
+							$this->_createGrift($order, $item, $product_off, $adjustment, $gift->quantity);
+						}
+
+						$controlPercNumProductOffer = 1;
+					}
+					
 					OrderCoupon::updateOrCreate(
 						[
 							'order_id' => $order->id,
@@ -512,7 +548,10 @@ class OrderFactory implements OrderFactoryContract
 							'commission_value_type' => $coupon->commission_value_type,
 							'commission_type' => $coupon->commission_type,
 							'validate_domains' => $coupon->validate_domains,
-							'domains' => $coupon->domains
+							'domains' => $coupon->domains,
+							'allows_medications' => $coupon->allows_medications,
+							'offers_products' => $coupon->offers_products,
+							'offer_product_min_purchase_value' => $coupon->offer_product_min_purchase_value
 						]
 					);
 
