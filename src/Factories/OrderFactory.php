@@ -222,7 +222,7 @@ class OrderFactory implements OrderFactoryContract
 				if (isset($feePackageingBagAdjustment)) {
 					OrderFee::create([
 						'order_id' => $order->id,
-						'type'	   => FeePackagingBag::class,
+						'type'	   => AdjustmentTypeProxy::FEE_PACKAGING_BAG()->value(),
 						'value'	   => $feePackageingBagAdjustment->getAmount()
 					]);
 				}
