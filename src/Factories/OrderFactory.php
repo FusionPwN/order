@@ -55,6 +55,7 @@ class OrderFactory implements OrderFactoryContract
 	private $orderType = "";
 
 	protected bool $needs_typesense_update = false;
+	protected array $products_to_update = [];
 
 	public function __construct(OrderNumberGenerator $generator, DocumentNumberGenerator $documentNumberGenerator)
 	{
@@ -370,7 +371,7 @@ class OrderFactory implements OrderFactoryContract
 		event(new OrderStatusChanged($order, $order->status->value(), $order->status->value(), 'backoffice.order.events.was-created'));
 
 		if ($this->needs_typesense_update) {
-			event(new ProductsUpdate());
+			event(new ProductsUpdate($this->products_to_update));
 		}
 
 		return $order;
@@ -403,6 +404,8 @@ class OrderFactory implements OrderFactoryContract
 				'stock'				=> $product->getStock(),
 				'vat'				=> $product->VAT_rate
 			]);
+
+			$this->products_to_update[] = $item['product_id'];
 
 			$controlPercNumProductOffer = 0; //Como o desconto de percentagem e numerario é aplicado a cada produto quando tem a opção de oferta so pode ofrecer 1 vez
 
