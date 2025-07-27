@@ -18,7 +18,7 @@
     "require": {
         "php": "^8.0|^8.2|^8.4",
         "konekt/concord": "^1.6",
-        "konekt/enum": "^3.0",
+        "konekt/enum": "^3.0|^4.1",
         "konekt/user": "^2.0",
         "konekt/address": "^2.0",
         "konekt/laravel-migration-compatibility": "^1.1"
