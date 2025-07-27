@@ -62,7 +62,7 @@ class OrderStatus extends Enum implements OrderStatusContract
 		self::REFUNDED 							=> true,
 	];
 
-	public static function choices()
+	public static function choices(): array
 	{
 		$result = [];
 		$choices = parent::choices();
