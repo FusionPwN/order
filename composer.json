@@ -20,7 +20,7 @@
         "konekt/concord": "^1.6",
         "konekt/enum": "^3.0|^4.1",
         "konekt/user": "^2.0",
-        "konekt/address": "^2.0",
+        "konekt/address": "^2.0|^3.4",
         "konekt/laravel-migration-compatibility": "^1.1"
     },
     "require-dev": {
