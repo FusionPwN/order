@@ -625,7 +625,7 @@ class OrderFactory implements OrderFactoryContract
 				$free_item['coupon_discount'] = -$product_off->getPriceVat();
 			}
 
-			$ofitem = $order->items()->updateOrCreate(['product_id' => $product_off->id, 'order_id' => $order->id], Arr::except($free_item, ['product', 'adjustments']));
+			$ofitem = $order->items()->create(Arr::except($free_item, ['product', 'adjustments']));
 
 			if (!$ofitem->product->isUnlimitedAvailability() && !$ofitem->product->isLimitedAvailability()) {
 				$finalStock = $free_item['product']->getStock() - $free_item['quantity'];
