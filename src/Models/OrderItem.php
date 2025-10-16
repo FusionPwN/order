@@ -16,17 +16,15 @@ namespace Vanilo\Order\Models;
 use App\Models\Traits\ProductItem;
 use Illuminate\Database\Eloquent\Model;
 use Vanilo\Adjustments\Contracts\Adjustable;
-use Vanilo\Adjustments\Support\HasAdjustmentsViaRelation;
-use Vanilo\Adjustments\Support\RecalculatesAdjustments;
 use Vanilo\Cart\Traits\CheckoutItemFunctions;
+use Vanilo\Cart\Traits\HasModifiers;
 use Vanilo\Order\Contracts\OrderItem as OrderItemContract;
 
 class OrderItem extends Model implements OrderItemContract, Adjustable
 {
-	use HasAdjustmentsViaRelation;
-	use RecalculatesAdjustments;
 	use ProductItem;
 	use CheckoutItemFunctions;
+	use HasModifiers;
 
 	protected $guarded = ['id', 'created_at', 'updated_at'];
 

@@ -24,8 +24,6 @@ use Konekt\User\Contracts\User;
 use Konekt\User\Models\UserProxy;
 use Traversable;
 use Vanilo\Adjustments\Contracts\Adjustable;
-use Vanilo\Adjustments\Support\HasAdjustmentsViaRelation;
-use Vanilo\Adjustments\Support\RecalculatesAdjustments;
 use Vanilo\Cart\Traits\HasModifiers;
 use Vanilo\Contracts\Address;
 use Vanilo\Contracts\Billpayer;
@@ -53,9 +51,6 @@ use Vanilo\Order\Contracts\OrderStatus;
 class Order extends Model implements OrderContract, Adjustable
 {
 	use CastsEnums;
-	#use HasAdjustmentsViaRelation;
-	#use RecalculatesAdjustments;
-
 	use HasModifiers;
 
 	protected $guarded = ['id', 'updated_at'];
