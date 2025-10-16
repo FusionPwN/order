@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Konekt\Address\Models\AddressProxy;
+use Konekt\AppShell\Widgets\Concerns\HasModifier;
 use Konekt\Enum\Eloquent\CastsEnums;
 use Konekt\User\Contracts\User;
 use Konekt\User\Models\UserProxy;
@@ -25,6 +26,7 @@ use Traversable;
 use Vanilo\Adjustments\Contracts\Adjustable;
 use Vanilo\Adjustments\Support\HasAdjustmentsViaRelation;
 use Vanilo\Adjustments\Support\RecalculatesAdjustments;
+use Vanilo\Cart\Traits\HasModifiers;
 use Vanilo\Contracts\Address;
 use Vanilo\Contracts\Billpayer;
 use Vanilo\Order\Contracts\Order as OrderContract;
@@ -50,100 +52,102 @@ use Vanilo\Order\Contracts\OrderStatus;
  */
 class Order extends Model implements OrderContract, Adjustable
 {
-    use CastsEnums;
-	use HasAdjustmentsViaRelation;
-	use RecalculatesAdjustments;
+	use CastsEnums;
+	#use HasAdjustmentsViaRelation;
+	#use RecalculatesAdjustments;
 
-    protected $guarded = ['id', 'updated_at'];
+	use HasModifiers;
+
+	protected $guarded = ['id', 'updated_at'];
 
 	protected $casts = [
 		'recurrence_date' => 'date'
 	];
 
-    protected $enums = [
-        'status' => 'OrderStatusProxy@enumClass'
-    ];
+	protected $enums = [
+		'status' => 'OrderStatusProxy@enumClass'
+	];
 
-    public function __construct(array $attributes = [])
-    {
-        // Set default status in case there was none given
-        if (!isset($attributes['status'])) {
-            $this->setDefaultOrderStatus();
-        }
+	public function __construct(array $attributes = [])
+	{
+		// Set default status in case there was none given
+		if (!isset($attributes['status'])) {
+			$this->setDefaultOrderStatus();
+		}
 
-        parent::__construct($attributes);
-    }
+		parent::__construct($attributes);
+	}
 
-    public static function findByNumber(string $orderNumber): ?OrderContract
-    {
-        return static::where('number', $orderNumber)->first();
-    }
+	public static function findByNumber(string $orderNumber): ?OrderContract
+	{
+		return static::where('number', $orderNumber)->first();
+	}
 
-    public function getNumber(): ?string
-    {
-        return $this->number;
-    }
+	public function getNumber(): ?string
+	{
+		return $this->number;
+	}
 
-    public function getStatus(): OrderStatus
-    {
-        return $this->status;
-    }
+	public function getStatus(): OrderStatus
+	{
+		return $this->status;
+	}
 
-    public function user()
-    {
-        return $this->belongsTo(UserProxy::modelClass());
-    }
+	public function user()
+	{
+		return $this->belongsTo(UserProxy::modelClass());
+	}
 
-    public function getBillpayer(): ?Collection
-    {
-        return $this->billpayer;
-    }
+	public function getBillpayer(): ?Collection
+	{
+		return $this->billpayer;
+	}
 
-    public function getShippingAddress(): ?Collection
-    {
-        return $this->shippingAddress;
-    }
+	public function getShippingAddress(): ?Collection
+	{
+		return $this->shippingAddress;
+	}
 
-    public function getItems(): Traversable
-    {
-        return $this->items;
-    }
+	public function getItems(): Traversable
+	{
+		return $this->items;
+	}
 
-    public function shippingAddress()
-    {
-        return $this->belongsTo(AddressProxy::modelClass());
-    }
+	public function shippingAddress()
+	{
+		return $this->belongsTo(AddressProxy::modelClass());
+	}
 
-    public function items()
-    {
-        return $this->hasMany(OrderItemProxy::modelClass());
-    }
+	public function items()
+	{
+		return $this->hasMany(OrderItemProxy::modelClass());
+	}
 
-    public function total()
-    {
-        return $this->items->sum('total');
-    }
+	public function total()
+	{
+		return $this->items->sum('total');
+	}
 
 	public function itemsTotal(): float
 	{
 		return $this->items->sum('total');
 	}
 
-    public function scopeOpen(Builder $query)
-    {
-        return $query->whereIn('status', OrderStatusProxy::getOpenStatuses());
-    }
+	public function scopeOpen(Builder $query)
+	{
+		return $query->whereIn('status', OrderStatusProxy::getOpenStatuses());
+	}
 
-    protected function setDefaultOrderStatus()
-    {
-        $this->setRawAttributes(
-            array_merge(
-                $this->attributes,
-                [
-                    'status' => OrderStatusProxy::defaultValue()
-                ]
-            ),
-            true
-        );
-    }
+	protected function setDefaultOrderStatus()
+	{
+		$this->setRawAttributes(
+			array_merge(
+				$this->attributes,
+				[
+					'status' => OrderStatusProxy::defaultValue()
+				]
+			),
+			true
+		);
+	}
 }
