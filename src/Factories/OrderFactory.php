@@ -198,14 +198,13 @@ class OrderFactory implements OrderFactoryContract
 					}
 				}
 
-				if(!session()->has('list_code')){
+				if (!session()->has('list_code')) {
 					$order->original_shipping_price = (float) $shippingAdjustment->getData('amount');
 					$order->shipping_price = $shippingAdjustment->getAmount();
 					$order->shipping_cause = $shippingAdjustment->getData('cause');
 				}
 
-				if(isset($paymentAdjustment))
-				{
+				if (isset($paymentAdjustment)) {
 					$order->payment_fee = $paymentAdjustment->getAmount();
 				}
 
@@ -502,8 +501,7 @@ class OrderFactory implements OrderFactoryContract
 				} else if (AdjustmentTypeProxy::IsCoupon($adjustment->type)) {
 					$coupon = Coupon::find($adjustment->getOrigin());
 
-					if($adjustment->type == AdjustmentTypeProxy::COUPON_PERC_NUM() && $coupon->offers_products == 1 && $controlPercNumProductOffer == 0)
-					{
+					if ($adjustment->type == AdjustmentTypeProxy::COUPON_PERC_NUM() && $coupon->offers_products == 1 && $controlPercNumProductOffer == 0) {
 						$selected_gifts = $adjustment->getData('selected_gifts');
 						$counted_indexes = [];
 						$gifts = collect();
@@ -534,7 +532,7 @@ class OrderFactory implements OrderFactoryContract
 
 						$controlPercNumProductOffer = 1;
 					}
-					
+
 					OrderCoupon::updateOrCreate(
 						[
 							'order_id' => $order->id,
