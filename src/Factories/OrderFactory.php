@@ -593,7 +593,7 @@ class OrderFactory implements OrderFactoryContract
 		}
 	}
 
-	protected function _createGrift(Order $order, array $item, ?Product $product_off, Adjustment | Modifier $adjustment, int $quantity)
+	protected function _createGrift(Order $order, array $item, ?Product $product_off, Modifier $adjustment, int | float $quantity)
 	{
 		if (null !== $product_off) {
 			$free_item = array_replace([], $item); # Clonar array
