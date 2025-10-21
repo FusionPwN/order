@@ -24,6 +24,7 @@ use Konekt\User\Contracts\User;
 use Konekt\User\Models\UserProxy;
 use Traversable;
 use Vanilo\Adjustments\Contracts\Adjustable;
+use Vanilo\Cart\Helpers\ModifierCollection;
 use Vanilo\Cart\Traits\HasModifiers;
 use Vanilo\Contracts\Address;
 use Vanilo\Contracts\Billpayer;
@@ -71,6 +72,8 @@ class Order extends Model implements OrderContract, Adjustable
 		}
 
 		parent::__construct($attributes);
+
+		$this->modifiers = new ModifierCollection($this);
 	}
 
 	public static function findByNumber(string $orderNumber): ?OrderContract
