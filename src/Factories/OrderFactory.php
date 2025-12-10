@@ -43,6 +43,7 @@ use Vanilo\Product\Models\ProductStateProxy;
 use App\Models\Admin\OrderFee;
 use Vanilo\Adjustments\Adjusters\FeePackagingBag;
 use Vanilo\Adjustments\Contracts\Adjustment;
+use Illuminate\Support\Facades\Log;
 
 class OrderFactory implements OrderFactoryContract
 {
@@ -404,6 +405,11 @@ class OrderFactory implements OrderFactoryContract
 				'stock'				=> $product->getStock(),
 				'vat'				=> $product->VAT_rate
 			]);
+
+			if($item['name'] == ''){
+				//Mandar o modelo do produto todo para um log info
+				Log::info('Produto sem nome detectado. Dados do produto: ' . json_encode($product->toArray()));
+			}
 
 			$this->products_to_update[] = $item['product_id'];
 
