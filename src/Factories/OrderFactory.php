@@ -324,10 +324,6 @@ class OrderFactory implements OrderFactoryContract
 						if (AdjustmentTypeProxy::IsCampaignDiscount($adjustment->type)) {
 							$item['discount_id'] = $adjustment->getOrigin();
 							$item['campaign_discount'] = $adjustment->getAmount();
-
-							if (null !== $adjustment->getData('item_id') && $adjustment->getAmount() != 0) {
-								$item['price'] = $item['product']->getPriceVat() - (float) $adjustment->getData('single_amount');
-							}
 						} else if (AdjustmentTypeProxy::IsCoupon($adjustment->type)) {
 							$item['coupon_id'] = $adjustment->getOrigin();
 							$item['coupon_discount'] = $adjustment->getAmount();
@@ -357,6 +353,27 @@ class OrderFactory implements OrderFactoryContract
 				}
 
 				$order->prescription_id = $prescription->id;
+			}
+
+			if (Arr::get($data, 'cart_properties') !== null) {
+				$cart_properties = Arr::get($data, 'cart_properties');
+
+				if ($cart_properties->used_crossselling ?? false) {
+					if (count($cart_properties->crossselling_products ?? []) > 0) {
+						$cnps = Arr::map(function ($item) {
+							return $item['product']->cnp;
+						}, $orderItems);
+
+						# if all the cnps are present in crossselling_products, mark the crossselling as completed
+						$complete = array_reduce($cart_properties->crossselling_products ?? [], function ($carry, $item) use ($cnps) {
+							return $carry && in_array($item, $cnps);
+						}, true);
+
+						if ($complete) {
+							$order->has_bundle = 1;
+						}
+					}
+				}
 			}
 
 			$order->save();
