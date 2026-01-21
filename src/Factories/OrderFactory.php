@@ -355,27 +355,6 @@ class OrderFactory implements OrderFactoryContract
 				$order->prescription_id = $prescription->id;
 			}
 
-			if (Arr::get($data, 'cart_properties') !== null) {
-				$cart_properties = Arr::get($data, 'cart_properties');
-
-				if ($cart_properties->used_crossselling ?? false) {
-					if (count($cart_properties->crossselling_products ?? []) > 0) {
-						$cnps = Arr::map(function ($item) {
-							return $item['product']->cnp;
-						}, $orderItems);
-
-						# if all the cnps are present in crossselling_products, mark the crossselling as completed
-						$complete = array_reduce($cart_properties->crossselling_products ?? [], function ($carry, $item) use ($cnps) {
-							return $carry && in_array($item, $cnps);
-						}, true);
-
-						if ($complete) {
-							$order->has_bundle = 1;
-						}
-					}
-				}
-			}
-
 			$order->save();
 		} catch (\Exception $e) {
 			DB::rollBack();
@@ -384,6 +363,28 @@ class OrderFactory implements OrderFactoryContract
 		}
 
 		DB::commit();
+
+		if (Arr::get($data, 'cart_properties') !== null) {
+			$cart_properties = Arr::get($data, 'cart_properties');
+
+			if ($cart_properties->used_crossselling ?? false) {
+				if (count($cart_properties->crossselling_products ?? []) > 0) {
+					$cnps = Arr::map(function ($item) {
+						return $item['product']->cnp;
+					}, $orderItems);
+
+					# if all the cnps are present in crossselling_products, mark the crossselling as completed
+					$complete = array_reduce($cart_properties->crossselling_products ?? [], function ($carry, $item) use ($cnps) {
+						return $carry && in_array($item, $cnps);
+					}, true);
+
+					if ($complete) {
+						$order->has_bundle = 1;
+						$order->save();
+					}
+				}
+			}
+		}
 
 		event(new OrderWasCreated($order));
 		event(new OrderStatusChanged($order, $order->status->value(), $order->status->value(), 'backoffice.order.events.was-created'));
