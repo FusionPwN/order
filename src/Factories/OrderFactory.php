@@ -96,7 +96,11 @@ class OrderFactory implements OrderFactoryContract
 				$order = app(Order::class);
 
 				$order->number 				= $data['number'] ?? $this->orderNumberGenerator->generateNumber($order);
-				$order->user_id 			= $data['user_id'] ?? Auth::guard('web')->id();
+				if($this->orderType == "backoffice"){
+					$order->user_id = $data['user_id'] ?? NULL;
+				} else {
+					$order->user_id = $data['user_id'] ?? Auth::guard('web')->id();
+				}
 				$order->token 				= (string) Str::uuid();
 
 				if (Arr::has($data, 'customAttributes') && Arr::has($data['customAttributes'], 'store_id')) {
