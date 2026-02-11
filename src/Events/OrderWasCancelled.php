@@ -13,6 +13,17 @@ declare(strict_types=1);
 
 namespace Vanilo\Order\Events;
 
+use Vanilo\Order\Contracts\Order;
+
 class OrderWasCancelled extends BaseOrderEvent
 {
+    public bool $auto;
+
+    public function __construct(Order $order, bool $auto = false)
+    {
+        parent::__construct($order);
+
+        $this->auto = $auto;
+    }
+
 }
