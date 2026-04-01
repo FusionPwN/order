@@ -18,12 +18,14 @@ use Vanilo\Order\Contracts\Order;
 class OrderWasCancelled extends BaseOrderEvent
 {
     public bool $auto;
+    public ?string $cancellationReason;
 
-    public function __construct(Order $order, bool $auto = false)
+    public function __construct(Order $order, bool $auto = false, ?string $cancellationReason = null)
     {
         parent::__construct($order);
 
         $this->auto = $auto;
+        $this->cancellationReason = $cancellationReason;
     }
 
 }
