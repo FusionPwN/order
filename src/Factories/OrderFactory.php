@@ -13,8 +13,9 @@ declare(strict_types=1);
 
 namespace Vanilo\Order\Factories;
 
+use App\Classes\Utilities;
 use App\Events\OrderStatusChanged;
-use App\Events\ProductsUpdate;
+use App\Events\ProductUpdate;
 use App\Generators\DocumentNumberGenerator;
 use App\Models\Admin\Card;
 use App\Models\Admin\Coupon;
@@ -45,6 +46,7 @@ use Vanilo\Adjustments\Adjusters\FeePackagingBag;
 use Vanilo\Adjustments\Contracts\Adjustment;
 use Vanilo\Cart\Helpers\Modifier;
 use Illuminate\Support\Facades\Log;
+use Vanilo\Order\Models\OrderItemProxy;
 
 class OrderFactory implements OrderFactoryContract
 {
@@ -56,7 +58,6 @@ class OrderFactory implements OrderFactoryContract
 	private $countDiscount = 1;
 	private $orderType = "";
 
-	protected bool $needs_typesense_update = false;
 	protected array $products_to_update = [];
 
 	public function __construct(OrderNumberGenerator $generator, DocumentNumberGenerator $documentNumberGenerator)
@@ -96,7 +97,7 @@ class OrderFactory implements OrderFactoryContract
 				$order = app(Order::class);
 
 				$order->number 				= $data['number'] ?? $this->orderNumberGenerator->generateNumber($order);
-				if($this->orderType == "backoffice"){
+				if ($this->orderType == "backoffice") {
 					$order->user_id = $data['user_id'] ?? NULL;
 				} else {
 					$order->user_id = $data['user_id'] ?? Auth::guard('web')->id();
@@ -393,8 +394,8 @@ class OrderFactory implements OrderFactoryContract
 		event(new OrderWasCreated($order));
 		event(new OrderStatusChanged($order, $order->status->value(), $order->status->value(), 'backoffice.order.events.was-created'));
 
-		if ($this->needs_typesense_update) {
-			event(new ProductsUpdate($this->products_to_update));
+		if (count($this->products_to_update) > 0) {
+			event(new ProductUpdate($this->products_to_update));
 		}
 
 		return $order;
@@ -403,6 +404,15 @@ class OrderFactory implements OrderFactoryContract
 	protected function createItems(Order $order, array $items)
 	{
 		foreach ($items as $item) {
+			if ($item['product']->isBundleProduct()) {
+				$this->createBundleItems($order, $item);
+
+				//call update for the bundle itself, each bundle item will call an update
+				$this->addProductUpdateEventIfNeeded($item);
+
+				continue;
+			}
+
 			$this->createItem($order, $item);
 		}
 	}
@@ -428,12 +438,10 @@ class OrderFactory implements OrderFactoryContract
 				'vat'				=> $product->VAT_rate
 			]);
 
-			if($item['name'] == ''){
+			if ($item['name'] == '') {
 				//Mandar o modelo do produto todo para um log info
 				Log::info('Produto sem nome detectado. Dados do produto: ' . json_encode($product->toArray()));
 			}
-
-			$this->products_to_update[] = $item['product_id'];
 
 			$controlPercNumProductOffer = 0; //Como o desconto de percentagem e numerario é aplicado a cada produto quando tem a opção de oferta so pode ofrecer 1 vez
 
@@ -597,25 +605,12 @@ class OrderFactory implements OrderFactoryContract
 
 		if ($item['quantity'] != 0 && $item['id'] != 'coupon-gift-dummy-item') {
 			if ($this->orderType == "backoffice") {
-				$oitem = $order->items()->updateOrCreate(['product_id' => $product->id, 'order_id' => $order->id], Arr::except($item, ['product', 'adjustments']));
+				$order->items()->updateOrCreate(['product_id' => $product->id, 'order_id' => $order->id], Arr::except($item, ['product', 'adjustments']));
 			} else {
-				$oitem = $order->items()->create($item);
+				$order->items()->create($item);
 			}
 
-			if (!$oitem->product->isUnlimitedAvailability() && !$oitem->product->isLimitedAvailability()) {
-				$finalStock = $product->getStock() - $item['quantity'];
-
-				$arrUpdateItem = [
-					'stock' => $finalStock
-				];
-
-				if ($finalStock <= 0) {
-					$arrUpdateItem['state'] = ProductStateProxy::UNAVAILABLE()->value();
-				}
-
-				$oitem->product()->update($arrUpdateItem);
-				$this->needs_typesense_update = true;
-			}
+			$this->addProductUpdateEventIfNeeded($item);
 		}
 	}
 
@@ -650,24 +645,66 @@ class OrderFactory implements OrderFactoryContract
 				$free_item['coupon_discount'] = $adjustment->getAmount();
 			}
 
-			$ofitem = $order->items()->create(Arr::except($free_item, ['product', 'adjustments']));
+			$order->items()->create(Arr::except($free_item, ['product', 'adjustments']));
 
-			if (!$ofitem->product->isUnlimitedAvailability() && !$ofitem->product->isLimitedAvailability()) {
-				$finalStock = $free_item['product']->getStock() - $free_item['quantity'];
+			$this->addProductUpdateEventIfNeeded($free_item);
+		}
+	}
 
-				$arrUpdateItem = [
-					'stock' => $finalStock
-				];
+	protected function createBundleItems(Order $order, array $item)
+	{
+		foreach ($item['product']->bundleItems as $bundleItem) {
+			$adjustmentConfig = Arr::first(
+				array_filter(
+					Arr::first($item['adjustments_collection'])->getData('bundle_config'),
+					function ($config) use ($bundleItem) {
+						return $config['product_id'] == $bundleItem->product->id;
+					}
+				)
+			);
 
-				if ($finalStock <= 0) {
-					$arrUpdateItem['state'] = ProductStateProxy::UNAVAILABLE()->value();
-				}
+			$bundle_item = array_merge($item, [
+				'product_type' 		=> $bundleItem->product->morphTypeName(),
+				'product_id' 		=> $bundleItem->product->getId(),
+				'product'			=> $bundleItem->product,
+				'original_price' 	=> $bundleItem->product->getPriceVat(),
+				'name' 				=> $bundleItem->product->getName(),
+				'stock' 			=> $bundleItem->product->getStock(),
+				'price' 			=> Utilities::RoundPrice($bundleItem->product->getPriceVat() - ($adjustmentConfig['discount_amount'] ?? 0)),
+				'vat' 				=> $bundleItem->product->VAT_rate,
+				'bundle_id' 		=> $item['product']->id,
+				'bundle_discount' 	=> $adjustmentConfig['discount_amount']
+			]);
 
+			if ($bundle_item['quantity'] != 0) {
+				$order->items()->create(Arr::except($bundle_item, ['product', 'adjustments']));
 
-				$ofitem->product()->update($arrUpdateItem);
-				$this->needs_typesense_update = true;
+				$this->addProductUpdateEventIfNeeded($bundle_item);
 			}
 		}
+	}
+
+	protected function addProductUpdateEventIfNeeded(array $item)
+	{
+
+		if ($item['product']->isUnlimitedAvailability() || $item['product']->isLimitedAvailability()) {
+			return;
+		}
+
+		$updatedStock = $item['product']->getStock() - $item['quantity'];
+
+		$productUpdateData = [
+			'stock' => $updatedStock
+		];
+
+		if ($updatedStock <= 0) {
+			$productUpdateData['state'] = ProductStateProxy::UNAVAILABLE()->value();
+		}
+
+		$this->products_to_update[] = [
+			'product_id' => $item['product']->id,
+			'data' => $productUpdateData
+		];
 	}
 
 	/**
