@@ -654,6 +654,7 @@ class OrderFactory implements OrderFactoryContract
 				'name' 				=> $bundleItem->product->getName(),
 				'stock' 			=> $bundleItem->product->getStock(),
 				'price' 			=> Utilities::RoundPrice($bundleItem->product->getPriceVat() - ($_bundleAdjustmentConfig['discount_amount'] ?? 0) - ($_couponAdjustmentConfig['discount_amount'] ?? 0)),
+				'quantity' 			=> $bundleItem->quantity * $item['quantity'],
 				'vat' 				=> $bundleItem->product->VAT_rate,
 				'bundle_id' 		=> $item['product']->id,
 				'bundle_discount' 	=> -($_bundleAdjustmentConfig['discount_amount']),
