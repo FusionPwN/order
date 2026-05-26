@@ -569,29 +569,7 @@ class OrderFactory implements OrderFactoryContract
 						$controlPercNumProductOffer = 1;
 					}
 
-					OrderCoupon::updateOrCreate(
-						[
-							'order_id' => $order->id,
-						],
-						[
-							'name' => $coupon->name,
-							'value' => $coupon->value,
-							'type' => $coupon->type->value(),
-							'code' => $coupon->code,
-							'accumulative' => $coupon->accumulative,
-							'min_value_only_for_aplicable' => $coupon->min_value_only_for_aplicable,
-							'coupon_id' => $coupon->id,
-							'affiliate_user_id' => $coupon->affiliate_user_id,
-							'commission_value' => $coupon->commission_value,
-							'commission_value_type' => $coupon->commission_value_type,
-							'commission_type' => $coupon->commission_type,
-							'validate_domains' => $coupon->validate_domains,
-							'domains' => $coupon->domains,
-							'allows_medications' => $coupon->allows_medications,
-							'offers_products' => $coupon->offers_products,
-							'offer_product_min_purchase_value' => $coupon->offer_product_min_purchase_value
-						]
-					);
+					$this->createCoupon($coupon, $order);
 
 					if ($coupon->isRegister()) {
 						$userEnc = Auth::guard('web')->user();
@@ -653,15 +631,20 @@ class OrderFactory implements OrderFactoryContract
 
 	protected function createBundleItems(Order $order, array $item)
 	{
+		// GET BUNDLE ADJUSTMENT
+		$bundleAdjustmentConfig = collect($item['adjustments_collection'])->filter(function ($adjustment) {
+			return $adjustment->type->equals(AdjustmentTypeProxy::BUNDLE_DISCOUNT());
+		})->first();
+
+		// GET COUPON ADJUSTMENT
+		$couponAdjustmentConfig = collect($item['adjustments_collection'])->filter(function ($adjustment) {
+			return $adjustment->type->equals(AdjustmentTypeProxy::COUPON_PERC_NUM());
+		})->first();
+
 		foreach ($item['product']->bundleItems as $bundleItem) {
-			$adjustmentConfig = Arr::first(
-				array_filter(
-					Arr::first($item['adjustments_collection'])->getData('bundle_config'),
-					function ($config) use ($bundleItem) {
-						return $config['product_id'] == $bundleItem->product->id;
-					}
-				)
-			);
+			
+			$_bundleAdjustmentConfig = collect($bundleAdjustmentConfig->getData('bundle_config'))->where('product_id', $bundleItem->product->id)->first();
+			$_couponAdjustmentConfig = collect($couponAdjustmentConfig?->getData('bundle_items'))->where('product_id', $bundleItem->product->id)->first();
 
 			$bundle_item = array_merge($item, [
 				'product_type' 		=> $bundleItem->product->morphTypeName(),
@@ -670,11 +653,12 @@ class OrderFactory implements OrderFactoryContract
 				'original_price' 	=> $bundleItem->product->getPriceVat(),
 				'name' 				=> $bundleItem->product->getName(),
 				'stock' 			=> $bundleItem->product->getStock(),
-				'price' 			=> Utilities::RoundPrice($bundleItem->product->getPriceVat() - ($adjustmentConfig['discount_amount'] ?? 0)),
+				'price' 			=> Utilities::RoundPrice($bundleItem->product->getPriceVat() - ($_bundleAdjustmentConfig['discount_amount'] ?? 0) - ($_couponAdjustmentConfig['discount_amount'] ?? 0)),
 				'vat' 				=> $bundleItem->product->VAT_rate,
 				'bundle_id' 		=> $item['product']->id,
-				'bundle_discount' 	=> -($adjustmentConfig['discount_amount']),
+				'bundle_discount' 	=> -($_bundleAdjustmentConfig['discount_amount']),
 				'bundle_sku'		=> $item['product']->cnp,
+				'coupon_discount' 	=> -($_couponAdjustmentConfig['discount_amount'] ?? 0)
 			]);
 
 			if ($bundle_item['quantity'] != 0) {
@@ -682,6 +666,10 @@ class OrderFactory implements OrderFactoryContract
 
 				$this->addProductUpdateEventIfNeeded($bundle_item);
 			}
+		}
+
+		if ($couponAdjustmentConfig) {
+			$this->createCoupon(Coupon::find($item['coupon_id']), $order);
 		}
 	}
 
@@ -706,6 +694,33 @@ class OrderFactory implements OrderFactoryContract
 			'product_id' => $item['product']->id,
 			'data' => $productUpdateData
 		];
+	}
+
+	protected function createCoupon(Coupon $coupon, Order $order)
+	{
+		OrderCoupon::updateOrCreate(
+			[
+				'order_id' => $order->id,
+			],
+			[
+				'name' => $coupon->name,
+				'value' => $coupon->value,
+				'type' => $coupon->type->value(),
+				'code' => $coupon->code,
+				'accumulative' => $coupon->accumulative,
+				'min_value_only_for_aplicable' => $coupon->min_value_only_for_aplicable,
+				'coupon_id' => $coupon->id,
+				'affiliate_user_id' => $coupon->affiliate_user_id,
+				'commission_value' => $coupon->commission_value,
+				'commission_value_type' => $coupon->commission_value_type,
+				'commission_type' => $coupon->commission_type,
+				'validate_domains' => $coupon->validate_domains,
+				'domains' => $coupon->domains,
+				'allows_medications' => $coupon->allows_medications,
+				'offers_products' => $coupon->offers_products,
+				'offer_product_min_purchase_value' => $coupon->offer_product_min_purchase_value
+			]
+		);
 	}
 
 	/**
