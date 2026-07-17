@@ -618,9 +618,9 @@ class OrderFactory implements OrderFactoryContract
 				$adjustment->type == AdjustmentTypeProxy::OFERTA_PROD_IGUAL() ||
 				$adjustment->type == AdjustmentTypeProxy::OFERTA_PROD()
 			) {
-				$free_item['campaign_discount'] = $adjustment->getAmount();
+				$free_item['campaign_discount'] = -$product_off->getPriceVat();
 			} else if ($adjustment->type == AdjustmentTypeProxy::COUPON_FREE_PRODUCT()) {
-				$free_item['coupon_discount'] = $adjustment->getAmount();
+				$free_item['coupon_discount'] = -$product_off->getPriceVat();
 			}
 
 			$order->items()->create(Arr::except($free_item, ['product', 'adjustments']));
