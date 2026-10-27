@@ -190,7 +190,9 @@ class OrderFactory implements OrderFactoryContract
 							'commission_value_type' => $coupon->commission_value_type,
 							'commission_type' => $coupon->commission_type,
 							'validate_domains' => $coupon->validate_domains,
-							'domains' => $coupon->domains
+							'domains' => $coupon->domains,
+							'erp_campaign_id' => $coupon->sifarmaCampaign?->erp_campaign_id,
+							'erp_campaign_name' => $coupon->sifarmaCampaign?->name
 						]);
 
 						if ($adjustment->type->value() === AdjustmentTypeProxy::COUPON_FREE_SHIPPING()->value()) {
@@ -528,6 +530,8 @@ class OrderFactory implements OrderFactoryContract
 							'num_min_buy' => $discount->num_min_buy,
 							'minimum_value' => $discount->minimum_value,
 							'description' => $discount->description,
+							'erp_campaign_id' => $discount->sifarmaCampaign?->erp_campaign_id,
+							'erp_campaign_name' => $discount->sifarmaCampaign?->name,
 							'associate' => $this->countDiscount,
 							'can_stack_direct_discount' => $discount->can_stack_direct_discount
 						]
@@ -719,7 +723,9 @@ class OrderFactory implements OrderFactoryContract
 				'domains' => $coupon->domains,
 				'allows_medications' => $coupon->allows_medications,
 				'offers_products' => $coupon->offers_products,
-				'offer_product_min_purchase_value' => $coupon->offer_product_min_purchase_value
+				'offer_product_min_purchase_value' => $coupon->offer_product_min_purchase_value,
+				'erp_campaign_id' => $coupon->sifarmaCampaign?->erp_campaign_id,
+				'erp_campaign_name' => $coupon->sifarmaCampaign?->name
 			]
 		);
 	}
